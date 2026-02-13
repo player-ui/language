@@ -185,6 +185,7 @@ fluent-generator -i <input-dir> -o <output-dir>
 ```
 
 The input directory should contain:
+
 - `manifest.json` with capabilities: `{ "capabilities": { "Assets": ["TypeName"], "Views": [...] } }`
 - Individual `<TypeName>.json` XLR files for each type
 
@@ -207,7 +208,12 @@ const program = ts.createProgram(typeFiles, {
 });
 
 const typeChecker = program.getTypeChecker();
-const converter = new TsConverter(typeChecker, ["Asset", "AssetWrapper", "Binding", "Expression"]);
+const converter = new TsConverter(typeChecker, [
+  "Asset",
+  "AssetWrapper",
+  "Binding",
+  "Expression",
+]);
 
 // Convert source file to XLR types
 const result = converter.convertSourceFile(sourceFile);
@@ -262,8 +268,8 @@ interface Alert {
 
 // Generated builder usage
 alert()
-  .withTitle(b`message.title`)     // Data binding via tagged template
-  .withCount(42)                    // Static value
+  .withTitle(b`message.title`) // Data binding via tagged template
+  .withCount(42) // Static value
   .withContent(text().withValue("Details")); // Asset auto-wrapped
 ```
 
@@ -377,7 +383,13 @@ Switches enable conditional rendering of assets based on runtime data or express
 Replace a specific item in a collection's values array with a switch:
 
 ```typescript
-import { collection, text, input, expression as e, binding as b } from "@player-lang/fluent";
+import {
+  collection,
+  text,
+  input,
+  expression as e,
+  binding as b,
+} from "@player-lang/fluent";
 
 const form = collection()
   .withLabel(text().withValue("User Form"))
@@ -441,7 +453,10 @@ collection()
   .switch(["values", 2], {
     // Conditional second field
     cases: [
-      { case: e`user.role === 'admin'`, asset: input().withBinding(b`adminField`) },
+      {
+        case: e`user.role === 'admin'`,
+        asset: input().withBinding(b`adminField`),
+      },
       { case: true, asset: input().withBinding(b`regularField`) },
     ],
   });
@@ -453,10 +468,7 @@ collection()
 
 ```typescript
 collection()
-  .withValues([
-    text().withValue("Item 1"),
-    text().withValue("Item 2"),
-  ])
+  .withValues([text().withValue("Item 1"), text().withValue("Item 2")])
   .switch(["values", 1], {
     cases: [
       { case: e`user.hasAccess`, asset: text().withValue("Accessible") },
@@ -469,13 +481,14 @@ collection()
 
 ```typescript
 collection()
-  .withValues([
-    text().withValue("Cart Status"),
-  ])
+  .withValues([text().withValue("Cart Status")])
   .switch(["values", 0], {
-    isDynamic: true,  // Re-evaluates on data changes
+    isDynamic: true, // Re-evaluates on data changes
     cases: [
-      { case: e`cart.items.length > 0`, asset: text().withValue(b`cart.items.length items`) },
+      {
+        case: e`cart.items.length > 0`,
+        asset: text().withValue(b`cart.items.length items`),
+      },
       { case: true, asset: text().withValue("Empty cart") },
     ],
   });
@@ -536,7 +549,10 @@ const requiresValidation = true;
 const submitButton = action()
   .withValue("submit")
   .withLabel(text().withValue("Submit"))
-  .if(() => requiresValidation, "validate", ["{{user.email}}", "{{user.password}}"]);
+  .if(() => requiresValidation, "validate", [
+    "{{user.email}}",
+    "{{user.password}}",
+  ]);
 
 // Only includes 'validate' property if requiresValidation is true
 ```
@@ -555,7 +571,7 @@ const button = action()
     () => isPrimary,
     "metaData",
     { role: "primary", size: "large" },
-    { role: "secondary", size: "medium" }
+    { role: "secondary", size: "medium" },
   );
 
 // Sets value="submit" and metaData with primary style
@@ -634,8 +650,8 @@ const button = action()
   .ifElse(
     () => isActive,
     "label",
-    text().withValue("Deactivate"),  // Shown when active
-    text().withValue("Activate")     // Shown when inactive
+    text().withValue("Deactivate"), // Shown when active
+    text().withValue("Activate"), // Shown when inactive
   );
 ```
 
@@ -651,7 +667,7 @@ const button = action()
   .if(
     () => useCustomLabel,
     "label",
-    () => text().withValue("Custom Submit")  // Only evaluated if predicate is true
+    () => text().withValue("Custom Submit"), // Only evaluated if predicate is true
   );
 ```
 
@@ -686,11 +702,13 @@ const stepForm = collection()
 ### When to Use Conditional Building vs Switches
 
 **Use Conditional Building (`if`/`ifElse`)** when:
+
 - The condition is known at build time (during flow creation)
 - You want to change asset structure based on configuration or feature flags
 - The decision is based on server-side data or build-time variables
 
 **Use Switches** when:
+
 - The condition depends on runtime data model values
 - You need the UI to react to user interactions or data changes
 - The decision should be made by Player at render time
@@ -710,9 +728,9 @@ const userList = collection()
   .withLabel(text().withValue("Users"))
   .withValues([
     template({
-      data: "users",           // Array to iterate over
-      output: "values",        // Property to populate (collection's values)
-      value: text().withValue(b`users._index_.name`),  // Asset for each item
+      data: "users", // Array to iterate over
+      output: "values", // Property to populate (collection's values)
+      value: text().withValue(b`users._index_.name`), // Asset for each item
     }),
   ]);
 
@@ -732,7 +750,7 @@ template({
   data: "products",
   output: "items",
   value: text().withValue(b`products._index_.title`),
-})
+});
 
 // Runtime behavior:
 // products[0] -> "{{products.0.title}}"
@@ -776,16 +794,15 @@ const productGrid = collection()
 Combine templates with static items in the same collection:
 
 ```typescript
-collection()
-  .withValues([
-    text().withValue("Header (static)"),
-    template({
-      data: "items",
-      output: "values",
-      value: text().withValue(b`items._index_.name`),
-    }),
-    text().withValue("Footer (static)"),
-  ]);
+collection().withValues([
+  text().withValue("Header (static)"),
+  template({
+    data: "items",
+    output: "values",
+    value: text().withValue(b`items._index_.name`),
+  }),
+  text().withValue("Footer (static)"),
+]);
 
 // Results in: [header, ...generated items..., footer]
 ```
@@ -799,7 +816,7 @@ template({
   data: "initialList",
   output: "items",
   value: text().withValue(b`initialList._index_`),
-})
+});
 ```
 
 **Dynamic Templates** — Regenerate when the source array changes:
@@ -808,9 +825,9 @@ template({
 template({
   data: "cart.items",
   output: "cartItems",
-  dynamic: true,  // Updates when cart.items changes
+  dynamic: true, // Updates when cart.items changes
   value: text().withValue(b`cart.items._index_.name`),
-})
+});
 ```
 
 ### Template Data Sources
@@ -823,14 +840,14 @@ template({
   data: "users.active",
   output: "values",
   value: text().withValue(b`users.active._index_.name`),
-})
+});
 
 // Tagged template binding (dynamic reference)
 template({
   data: b`currentList`,
   output: "values",
   value: text().withValue(b`currentList._index_.name`),
-})
+});
 ```
 
 ### Nested Templates
@@ -838,22 +855,21 @@ template({
 Handle multi-dimensional data with nested templates:
 
 ```typescript
-collection()
-  .withValues([
-    template({
-      data: "categories",
-      output: "values",
-      value: collection()
-        .withLabel(text().withValue(b`categories._index_.name`))
-        .withValues([
-          template({
-            data: b`categories._index_.items`,
-            output: "values",
-            value: text().withValue(b`categories._index_.items._index1_.title`),
-          }),
-        ]),
-    }),
-  ]);
+collection().withValues([
+  template({
+    data: "categories",
+    output: "values",
+    value: collection()
+      .withLabel(text().withValue(b`categories._index_.name`))
+      .withValues([
+        template({
+          data: b`categories._index_.items`,
+          output: "values",
+          value: text().withValue(b`categories._index_.items._index1_.title`),
+        }),
+      ]),
+  }),
+]);
 
 // Note: Nested templates use _index1_, _index2_, etc. for each depth level
 ```
@@ -879,7 +895,7 @@ template({
       },
     };
   },
-})
+});
 ```
 
 ### Real-World Example: Dynamic Form Fields
@@ -892,12 +908,10 @@ const dynamicForm = collection()
     template({
       data: "survey.questions",
       output: "values",
-      dynamic: true,  // Updates if questions change
+      dynamic: true, // Updates if questions change
       value: collection()
         .withLabel(text().withValue(b`survey.questions._index_.text`))
-        .withValues([
-          input().withBinding(b`survey.responses[_index_]`),
-        ]),
+        .withValues([input().withBinding(b`survey.responses[_index_]`)]),
     }),
     action()
       .withLabel(text().withValue("Submit"))
@@ -990,7 +1004,10 @@ Example configuration:
 const config: GeneratorConfig = {
   fluentImportPath: "../gen/common.js",
   typeImportPathGenerator: (typeName) => {
-    const kebab = typeName.replace(/([A-Z])/g, "-$1").toLowerCase().replace(/^-/, "");
+    const kebab = typeName
+      .replace(/([A-Z])/g, "-$1")
+      .toLowerCase()
+      .replace(/^-/, "");
     return `../types/${kebab}.js`;
   },
 };

@@ -156,11 +156,7 @@ importers:
 
   common/test-utils: {}
 
-  dsl/fluent:
-    devDependencies:
-      '@player-lang/fluent-generator':
-        specifier: workspace:*
-        version: link:../../generators/fluent
+  dsl/fluent: {}
 
   dsl/react: {}
 
