@@ -1,6 +1,6 @@
 # DSL
 
-The `@player-lang/dsl` package provides the primitives and build tools to create Player Asset Component libraries, and statically generate Player JSON content using TSX.
+The `@player-lang/react-dsl` package provides the primitives and build tools to create Player Asset Component libraries, and statically generate Player JSON content using TSX.
 
 ## Asset Component Libraries
 
