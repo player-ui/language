@@ -16,6 +16,8 @@ pom.xml.*
 scripts/target/
 .env
 typedoc
+*/generated/*
+
 # Ignore backup files.
 *~
 # Ignore Vim swap files.

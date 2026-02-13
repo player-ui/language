@@ -20,7 +20,7 @@ export function createConfig() {
       const bundleEntryName = process.env.PLAYER_NATIVE_BUNDLE;
       const bundleFileTarget = path.join(
         "dist",
-        bundleEntryName + ".native.js"
+        bundleEntryName + ".native.js",
       );
       return [
         {
