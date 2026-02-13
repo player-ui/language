@@ -1,0 +1,58 @@
+{
+    "source": "/private/var/tmp/_bazel_kreddy8/6fc13ccb395252816f0c23d8394e8532/sandbox/darwin-sandbox/134/execroot/player/node_modules/@player-ui/reference-assets-plugin/dist/index.d.ts",
+    "name": "InfoAsset",
+    "type": "object",
+    "properties": {
+        "title": {
+            "required": false,
+            "node": {
+                "type": "ref",
+                "ref": "AssetWrapper",
+                "title": "InfoAsset.title",
+                "description": "The string value to show"
+            }
+        },
+        "subTitle": {
+            "required": false,
+            "node": {
+                "type": "ref",
+                "ref": "AssetWrapper",
+                "title": "InfoAsset.subTitle",
+                "description": "subtitle"
+            }
+        },
+        "primaryInfo": {
+            "required": false,
+            "node": {
+                "type": "ref",
+                "ref": "AssetWrapper",
+                "title": "InfoAsset.primaryInfo",
+                "description": "Primary place for info"
+            }
+        },
+        "actions": {
+            "required": false,
+            "node": {
+                "type": "array",
+                "elementType": {
+                    "type": "ref",
+                    "ref": "AssetWrapper"
+                },
+                "title": "InfoAsset.actions",
+                "description": "List of actions to show at the bottom of the page"
+            }
+        }
+    },
+    "additionalProperties": false,
+    "title": "InfoAsset",
+    "extends": {
+        "type": "ref",
+        "ref": "Asset<'info'>",
+        "genericArguments": [
+            {
+                "type": "string",
+                "const": "info"
+            }
+        ]
+    }
+}

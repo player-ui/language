@@ -1,0 +1,12 @@
+{
+    "pluginName": "reference-assets-web-plugin",
+    "capabilities": {
+        "Assets": [
+            "InputAsset",
+            "TextAsset",
+            "ActionAsset",
+            "InfoAsset",
+            "CollectionAsset"
+        ]
+    }
+}
