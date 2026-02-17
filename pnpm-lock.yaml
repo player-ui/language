@@ -28,17 +28,17 @@ importers:
         specifier: ^1.4.0
         version: 1.6.2(typescript@5.5.4)
       '@xlr-lib/xlr':
-        specifier: 0.2.0--canary.3.46
-        version: 0.2.0--canary.3.46
+        specifier: 0.1.1-next.1
+        version: 0.1.1-next.1
       '@xlr-lib/xlr-converters':
-        specifier: 0.2.0--canary.3.46
-        version: 0.2.0--canary.3.46(jsonc-parser@2.3.1)(typescript@5.5.4)
+        specifier: 0.1.1-next.1
+        version: 0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)
       '@xlr-lib/xlr-sdk':
-        specifier: 0.2.0--canary.3.46
-        version: 0.2.0--canary.3.46(typescript@5.5.4)
+        specifier: 0.1.1-next.1
+        version: 0.1.1-next.1(typescript@5.5.4)
       '@xlr-lib/xlr-utils':
-        specifier: 0.2.0--canary.3.46
-        version: 0.2.0--canary.3.46(jsonc-parser@2.3.1)(typescript@5.5.4)
+        specifier: 0.1.1-next.1
+        version: 0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)
       dequal:
         specifier: ^2.0.2
         version: 2.0.3
@@ -1018,24 +1018,24 @@ packages:
   '@vitest/utils@2.1.9':
     resolution: {integrity: sha512-v0psaMSkNJ3A2NMrUEHFRzJtDPFn+/VWZ5WxImB21T9fjucJRmS7xCS3ppEnARb9y11OAzaD+P2Ps+b+BGX5iQ==, tarball: https://registry.npmjs.org/@vitest/utils/-/utils-2.1.9.tgz}
 
-  '@xlr-lib/xlr-converters@0.2.0--canary.3.46':
-    resolution: {integrity: sha512-PYqZqe5Cf/61Iw9FJ149sD3PNQS4/uDiEuFOPj1FN7yhLjrfiVO6kSTuOkrcXrs/L6noq7RXlAoY+0fyYClGNA==, tarball: https://registry.npmjs.org/@xlr-lib/xlr-converters/-/xlr-converters-0.2.0--canary.3.46.tgz}
+  '@xlr-lib/xlr-converters@0.1.1-next.1':
+    resolution: {integrity: sha512-uFxVj5J9atsz/vNW+Tw1IFoPKO7DFgj4PqqUz5734e5THFCBJ8ZPo4gw6cYNqhwOkVQ6HfKsVPeWF9zmoSt9PA==, tarball: https://registry.npmjs.org/@xlr-lib/xlr-converters/-/xlr-converters-0.1.1-next.1.tgz}
     peerDependencies:
       typescript: 5.5.4
 
-  '@xlr-lib/xlr-sdk@0.2.0--canary.3.46':
-    resolution: {integrity: sha512-Umjm0WSY6nTwCz56nHmiwyu3+q9ybB+N05Hem0aupW2pwr4aNxpGzJLItXxLKNGs1YI50hv/OOK2Smgb7jZLiw==, tarball: https://registry.npmjs.org/@xlr-lib/xlr-sdk/-/xlr-sdk-0.2.0--canary.3.46.tgz}
+  '@xlr-lib/xlr-sdk@0.1.1-next.1':
+    resolution: {integrity: sha512-8RbAwyR9iVwcUpjmjfekCm1OCwQ/aYs+XxuwEE/d7M1o07Eb/bYUovEMRiAr9DhiRwR6VshbW2yMv/blyz94Ag==, tarball: https://registry.npmjs.org/@xlr-lib/xlr-sdk/-/xlr-sdk-0.1.1-next.1.tgz}
     peerDependencies:
       typescript: 5.5.4
 
-  '@xlr-lib/xlr-utils@0.2.0--canary.3.46':
-    resolution: {integrity: sha512-0UN6kcU/bkAs3mf1jQN2Vzk9QS1rCy0lcEIopedbRX0oLHV1z0RKY9SGgbqDexAHV+GGKjogNfv51nXur1oYRg==, tarball: https://registry.npmjs.org/@xlr-lib/xlr-utils/-/xlr-utils-0.2.0--canary.3.46.tgz}
+  '@xlr-lib/xlr-utils@0.1.1-next.1':
+    resolution: {integrity: sha512-NqmvM/hpROJzYKPiXaSDO8D6W+Zcgp8CIL/7xE9WiRliGKzCZau9Zou80KIepkxgq6o1s5X4PDPxR1pGWNK5Pw==, tarball: https://registry.npmjs.org/@xlr-lib/xlr-utils/-/xlr-utils-0.1.1-next.1.tgz}
     peerDependencies:
       jsonc-parser: 2.3.1
       typescript: 5.5.4
 
-  '@xlr-lib/xlr@0.2.0--canary.3.46':
-    resolution: {integrity: sha512-xGRoGb7Z8hsz4CRxhhns/ua5ra/pK9Eqpbg4kiVa5sUbVuhilcBXM20QKdMx9jpBEBjM5JyybVYPXbCB1QqJsw==, tarball: https://registry.npmjs.org/@xlr-lib/xlr/-/xlr-0.2.0--canary.3.46.tgz}
+  '@xlr-lib/xlr@0.1.1-next.1':
+    resolution: {integrity: sha512-AybUJPSW1Vdpq8FsXzAUnPvbTavzD2NYqiR+EDBqOEVchnDXrtiNG2vsjMmzooxaaa+/JYps8vlTbgG9n2Dflw==, tarball: https://registry.npmjs.org/@xlr-lib/xlr/-/xlr-0.1.1-next.1.tgz}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==, tarball: https://registry.npmjs.org/acorn-jsx/-/acorn-jsx-5.3.2.tgz}
@@ -3914,35 +3914,35 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 1.2.0
 
-  '@xlr-lib/xlr-converters@0.2.0--canary.3.46(jsonc-parser@2.3.1)(typescript@5.5.4)':
+  '@xlr-lib/xlr-converters@0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)':
     dependencies:
-      '@xlr-lib/xlr': 0.2.0--canary.3.46
-      '@xlr-lib/xlr-utils': 0.2.0--canary.3.46(jsonc-parser@2.3.1)(typescript@5.5.4)
+      '@xlr-lib/xlr': 0.1.1-next.1
+      '@xlr-lib/xlr-utils': 0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)
       tslib: 2.8.1
       typescript: 5.5.4
     transitivePeerDependencies:
       - jsonc-parser
 
-  '@xlr-lib/xlr-sdk@0.2.0--canary.3.46(typescript@5.5.4)':
+  '@xlr-lib/xlr-sdk@0.1.1-next.1(typescript@5.5.4)':
     dependencies:
       '@types/fs-extra': 9.0.13
       '@types/node': 18.19.130
-      '@xlr-lib/xlr': 0.2.0--canary.3.46
-      '@xlr-lib/xlr-converters': 0.2.0--canary.3.46(jsonc-parser@2.3.1)(typescript@5.5.4)
-      '@xlr-lib/xlr-utils': 0.2.0--canary.3.46(jsonc-parser@2.3.1)(typescript@5.5.4)
+      '@xlr-lib/xlr': 0.1.1-next.1
+      '@xlr-lib/xlr-converters': 0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)
+      '@xlr-lib/xlr-utils': 0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)
       fs-extra: 10.1.0
       jsonc-parser: 2.3.1
       tslib: 2.8.1
       typescript: 5.5.4
 
-  '@xlr-lib/xlr-utils@0.2.0--canary.3.46(jsonc-parser@2.3.1)(typescript@5.5.4)':
+  '@xlr-lib/xlr-utils@0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)':
     dependencies:
-      '@xlr-lib/xlr': 0.2.0--canary.3.46
+      '@xlr-lib/xlr': 0.1.1-next.1
       jsonc-parser: 2.3.1
       tslib: 2.8.1
       typescript: 5.5.4
 
-  '@xlr-lib/xlr@0.2.0--canary.3.46':
+  '@xlr-lib/xlr@0.1.1-next.1':
     dependencies:
       tslib: 2.8.1
 
