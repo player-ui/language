@@ -38,9 +38,28 @@ class A2UIToPlayerError(Exception):
     pass
 
 
+def _a2ui_path_to_player_path(a2ui_path: str) -> str:
+    """
+    Convert A2UI path to Player path format.
+    A2UI uses '/' as separator (e.g. "/flight/airline"); Player uses '.' (e.g. "flight.airline").
+    """
+    path = (a2ui_path or "").strip()
+    if path.startswith("/"):
+        path = path[1:]
+    return path.replace("/", ".")
+
+
+def _player_binding_string(player_path: str) -> str:
+    """
+    When a path is used as an attribute value (binding), Player expects it wrapped in double curly brackets.
+    """
+    return "{{" + player_path + "}}"
+
+
 def _convert_bound_value_to_player(bv: BoundValue, prop_name: str) -> Any:
     """
     Convert A2UI BoundValue to a form Player can use (binding string or literal).
+    Paths are converted from A2UI format (/) to Player format (.) and wrapped in {{}} when used as attributes.
     """
     if bv.is_literal_only():
         if bv.literal_string is not None:
@@ -51,8 +70,9 @@ def _convert_bound_value_to_player(bv: BoundValue, prop_name: str) -> Any:
             return bv.literal_boolean
         if bv.literal_array is not None:
             return bv.literal_array
-    if bv.is_path_only():
-        return bv.path
+    if bv.is_path_only() and bv.path:
+        player_path = _a2ui_path_to_player_path(bv.path)
+        return _player_binding_string(player_path)
     if bv.is_init_shorthand():
         raise A2UIToPlayerError(
             f"BoundValue for '{prop_name}' uses path+literal initialization shorthand. "
@@ -196,7 +216,7 @@ def _build_asset_tree(
             #player_template.withOutput(template_output_path)
             #player_template.withAsset(AssetWrapper(template_asset))
             #asset["children"] = [AssetWrapper(player_template)]
-             raise A2UIToPlayerError("Templates aren't supported yet")
+            raise A2UIToPlayerError("Templates aren't supported yet")
         elif children_val is not None:
             raise A2UIToPlayerError(f"Unsupported children value type: {type(children_val)}")
 
