@@ -53,10 +53,14 @@ export function createConfig() {
       {
         ...defaultOptions,
         format: ["esm"],
-        outExtension: () => ({ js: ".legacy-esm.js", dts: ".d.mts" }),
+        outExtension: () => ({ js: ".mjs", dts: ".d.mts" }),
         clean: true,
+        async onSuccess() {
+          // Support Webpack 4 by pointing `"module"` to a file with a `.js` extension
+          fs.copyFileSync("dist/index.mjs", "dist/index.legacy-esm.js");
+        },
       },
-      // Browser-ready ESM, production + inlined NODE_ENV
+      // Browser-ready ESM, production + minified
       {
         ...defaultOptions,
         define: {
