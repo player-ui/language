@@ -34,11 +34,11 @@ export function createConfig() {
           async onSuccess() {
             await fs.promises.copyFile(
               "dist/index.global.js",
-              bundleFileTarget
+              bundleFileTarget,
             );
             await fs.promises.copyFile(
               "dist/index.global.js.map",
-              bundleFileTarget + ".map"
+              bundleFileTarget + ".map",
             );
 
             await fs.promises.rm("dist/index.global.js");
@@ -49,17 +49,14 @@ export function createConfig() {
     }
 
     return [
+      // Support Webpack 4 by pointing `"module"` to a file with a `.js` extension
       {
         ...defaultOptions,
         format: ["esm"],
-        outExtension: () => ({ js: ".mjs", dts: ".d.mts" }),
+        outExtension: () => ({ js: ".legacy-esm.js", dts: ".d.mts" }),
         clean: true,
-        async onSuccess() {
-          // Support Webpack 4 by pointing `"module"` to a file with a `.js` extension
-          fs.copyFileSync("dist/index.mjs", "dist/index.legacy-esm.js");
-        },
       },
-      // Browser-ready ESM, production + minified
+      // Browser-ready ESM, production + inlined NODE_ENV
       {
         ...defaultOptions,
         define: {

@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { resolveNestedAssetWrappers } from "../nested-asset-wrappers";
 import type { BaseBuildContext } from "../../../types";
-import { FLUENT_BUILDER_SYMBOL } from "../../../types";
+import { FUNCTIONAL_BUILDER_SYMBOL } from "../../../types";
 
 describe("resolveNestedAssetWrappers", () => {
   test("skips paths with length < 2", () => {
@@ -174,7 +174,7 @@ describe("resolveNestedAssetWrappers", () => {
   test("resolves intermediate builders before continuing traversal", () => {
     // Create a mock builder for the intermediate object
     const mockBuilder = {
-      [FLUENT_BUILDER_SYMBOL]: true as const,
+      [FUNCTIONAL_BUILDER_SYMBOL]: true as const,
       build: () => ({
         left: { type: "text", value: "From builder" },
       }),

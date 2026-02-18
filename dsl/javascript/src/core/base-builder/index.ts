@@ -1,5 +1,5 @@
 export {
-  FLUENT_BUILDER_SYMBOL,
+  FUNCTIONAL_BUILDER_SYMBOL,
   BranchTypes,
   StorageKeys,
   PropertyKeys,

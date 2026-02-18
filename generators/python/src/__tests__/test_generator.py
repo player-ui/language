@@ -33,8 +33,8 @@ class TestGenerator:
                     {
                         "id": "test-asset",
                         "type": "action",
-                        "value": "next", 
-                        "exp": "test", 
+                        "value": "next",
+                        "exp": "test",
                         "metaData" : {
                             "beacon": {
                                 "test": "test",
@@ -42,8 +42,6 @@ class TestGenerator:
                             "skipValidation": True,
                             "role": "test"
                         },
-                        "accessibility": None,
-                        "label": None,
                     }
                 , sort_keys=True, indent=4)
 
