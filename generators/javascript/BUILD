@@ -20,9 +20,9 @@ js_pipeline(
     deps = [
         "//:node_modules/@xlr-lib/xlr",
         "//:node_modules/@xlr-lib/xlr-utils",
-        ":node_modules/ts-morph",
+        "//:node_modules/ts-morph",
     ],
     peer_deps = [
-        ":node_modules/@player-ui/types",
+        "//:node_modules/@player-ui/types",
     ]
 )
