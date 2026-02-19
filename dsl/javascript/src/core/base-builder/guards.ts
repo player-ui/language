@@ -1,6 +1,6 @@
 import type { Asset, AssetWrapper } from "@player-ui/types";
 import type { BaseBuildContext, FunctionalBuilder } from "./types";
-import { FLUENT_BUILDER_SYMBOL } from "./types";
+import { FUNCTIONAL_BUILDER_SYMBOL } from "./types";
 
 /**
  * Type guard to check if a value is a FunctionalBuilder instance
@@ -14,13 +14,15 @@ export function isFunctionalBuilder<
     return false;
   }
 
-  if (!(FLUENT_BUILDER_SYMBOL in value)) {
+  if (!(FUNCTIONAL_BUILDER_SYMBOL in value)) {
     return false;
   }
 
   const obj = value as Record<symbol | string, unknown>;
 
-  return obj[FLUENT_BUILDER_SYMBOL] === true && typeof obj.build === "function";
+  return (
+    obj[FUNCTIONAL_BUILDER_SYMBOL] === true && typeof obj.build === "function"
+  );
 }
 
 /**

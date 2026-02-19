@@ -4,13 +4,13 @@
  */
 export const ErrorCodes = {
   /** Context is missing when required */
-  MISSING_CONTEXT: "FLUENT_MISSING_CONTEXT",
+  MISSING_CONTEXT: "FUNCTIONAL_MISSING_CONTEXT",
   /** Invalid branch type in ID generation */
-  INVALID_BRANCH: "FLUENT_INVALID_BRANCH",
+  INVALID_BRANCH: "FUNCTIONAL_INVALID_BRANCH",
   /** Template produced no output */
-  TEMPLATE_NO_OUTPUT: "FLUENT_TEMPLATE_NO_OUTPUT",
+  TEMPLATE_NO_OUTPUT: "FUNCTIONAL_TEMPLATE_NO_OUTPUT",
   /** Invalid path in value resolution */
-  INVALID_PATH: "FLUENT_INVALID_PATH",
+  INVALID_PATH: "FUNCTIONAL_INVALID_PATH",
 } as const;
 
 /**

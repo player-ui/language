@@ -5,7 +5,7 @@ import type { TaggedTemplateValue } from "../tagged-template/types";
  * Unique symbol to identify FunctionalBuilder instances
  * Used for runtime type checking of builder objects
  */
-export const FLUENT_BUILDER_SYMBOL: unique symbol =
+export const FUNCTIONAL_BUILDER_SYMBOL: unique symbol =
   Symbol.for("functional-builder");
 
 /**
@@ -47,7 +47,7 @@ export interface FunctionalBuilder<
   T,
   C extends BaseBuildContext = BaseBuildContext,
 > {
-  readonly [FLUENT_BUILDER_SYMBOL]: true;
+  readonly [FUNCTIONAL_BUILDER_SYMBOL]: true;
   build(context?: C): T;
   peek<K extends keyof T>(key: K): T[K] | undefined;
   has<K extends keyof T>(key: K): boolean;
@@ -57,7 +57,7 @@ export interface FunctionalBuilder<
  * Type-erased asset builder interface for generic asset handling
  */
 export type AnyAssetBuilder<C extends BaseBuildContext = BaseBuildContext> = {
-  readonly [FLUENT_BUILDER_SYMBOL]: true;
+  readonly [FUNCTIONAL_BUILDER_SYMBOL]: true;
   build(context?: C): Asset;
   peek(key: string): unknown;
   has(key: string): boolean;

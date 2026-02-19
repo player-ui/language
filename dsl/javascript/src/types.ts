@@ -2,11 +2,11 @@ import type { Asset } from "@player-ui/types";
 import type { TaggedTemplateValue } from "./core/tagged-template";
 import type {
   BaseBuildContext,
-  FLUENT_BUILDER_SYMBOL,
+  FUNCTIONAL_BUILDER_SYMBOL,
 } from "./core/base-builder";
 
 type AnyAssetBuilder<C extends BaseBuildContext = BaseBuildContext> = {
-  readonly [FLUENT_BUILDER_SYMBOL]: true;
+  readonly [FUNCTIONAL_BUILDER_SYMBOL]: true;
   build(context?: C): Asset;
   peek(key: string): unknown;
   has(key: string): boolean;

@@ -4,7 +4,7 @@ import type {
   FunctionalBuilder,
   MixedArrayMetadata,
 } from "../types";
-import { FLUENT_BUILDER_SYMBOL } from "../types";
+import { FUNCTIONAL_BUILDER_SYMBOL } from "../types";
 import { ValueStorage } from "../storage/value-storage";
 import { resolveMixedArrays } from "../resolution/steps/mixed-arrays";
 
@@ -13,7 +13,7 @@ function createMockBuilder<T = { id: string; type: string }>(
   buildResult: T,
 ): FunctionalBuilder<T, BaseBuildContext> {
   const builder = {
-    [FLUENT_BUILDER_SYMBOL]: true as const,
+    [FUNCTIONAL_BUILDER_SYMBOL]: true as const,
     build: vi.fn((ctx?: BaseBuildContext) => ({
       ...buildResult,
       id: ctx?.parentId

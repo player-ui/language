@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import type { BaseBuildContext, FunctionalBuilder } from "../types";
-import { FLUENT_BUILDER_SYMBOL } from "../types";
+import { FUNCTIONAL_BUILDER_SYMBOL } from "../types";
 import { ValueStorage } from "../storage/value-storage";
 
 // Create a mock builder that satisfies the FunctionalBuilder interface
@@ -8,7 +8,7 @@ function createMockBuilder<T>(
   buildResult: T,
 ): FunctionalBuilder<T, BaseBuildContext> {
   return {
-    [FLUENT_BUILDER_SYMBOL]: true as const,
+    [FUNCTIONAL_BUILDER_SYMBOL]: true as const,
     build: vi.fn(() => buildResult),
   } as unknown as FunctionalBuilder<T, BaseBuildContext>;
 }

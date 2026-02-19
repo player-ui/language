@@ -4,7 +4,7 @@ import {
   type ConditionalValue,
   type SwitchMetadata,
   type FunctionalPartial,
-  FLUENT_BUILDER_SYMBOL,
+  FUNCTIONAL_BUILDER_SYMBOL,
   StorageKeys,
 } from "./types";
 import { ValueStorage } from "./storage/value-storage";
@@ -27,7 +27,7 @@ export abstract class FunctionalBuilderBase<
   T,
   C extends BaseBuildContext = BaseBuildContext,
 > {
-  readonly [FLUENT_BUILDER_SYMBOL]: true = true as const;
+  readonly [FUNCTIONAL_BUILDER_SYMBOL]: true = true as const;
 
   protected valueStorage: ValueStorage<T>;
   protected auxiliaryStorage: AuxiliaryStorage;
