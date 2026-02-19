@@ -72,7 +72,8 @@ def _convert_bound_value_to_player(bv: BoundValue, prop_name: str) -> Any:
             return bv.literal_array
     if bv.is_path_only() and bv.path:
         player_path = _a2ui_path_to_player_path(bv.path)
-        return _player_binding_string(player_path)
+        #return _player_binding_string(player_path)
+        return player_path
     if bv.is_init_shorthand():
         raise A2UIToPlayerError(
             f"BoundValue for '{prop_name}' uses path+literal initialization shorthand. "
