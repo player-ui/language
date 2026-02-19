@@ -161,19 +161,6 @@ importers:
   dsl/react: {}
 
   generators/javascript:
-    dependencies:
-      '@player-ui/types':
-        specifier: '>=0.12.0'
-        version: 0.15.0
-      '@xlr-lib/xlr':
-        specifier: 0.1.1-next.1
-        version: 0.1.1-next.1
-      '@xlr-lib/xlr-utils':
-        specifier: 0.1.1-next.1
-        version: 0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)
-      ts-morph:
-        specifier: ^24.0.0
-        version: 24.0.0
     devDependencies:
       '@player-lang/functional-dsl':
         specifier: workspace:*
@@ -181,9 +168,6 @@ importers:
       '@player-lang/test-utils':
         specifier: workspace:*
         version: link:../../common/test-utils
-      '@xlr-lib/xlr-converters':
-        specifier: 0.1.1-next.1
-        version: 0.1.1-next.1(jsonc-parser@2.3.1)(typescript@5.5.4)
 
   lsp/complexity-check-plugin:
     dependencies:

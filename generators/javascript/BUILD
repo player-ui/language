@@ -22,4 +22,7 @@ js_pipeline(
         "//:node_modules/@xlr-lib/xlr-utils",
         ":node_modules/ts-morph",
     ],
+    peer_deps = [
+        ":node_modules/@player-ui/types",
+    ]
 )
