@@ -1,0 +1,23 @@
+{
+    "name": "AssetBinding",
+    "type": "object",
+    "source": "src/index.ts",
+    "properties": {
+        "binding": {
+            "required": true,
+            "node": {
+                "type": "ref",
+                "ref": "Binding",
+                "title": "AssetBinding.binding",
+                "description": "A binding that points to somewhere in the data model"
+            }
+        }
+    },
+    "additionalProperties": false,
+    "title": "AssetBinding",
+    "description": "An asset that contains a Binding.",
+    "extends": {
+        "type": "ref",
+        "ref": "Asset"
+    }
+}

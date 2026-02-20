@@ -1,0 +1,390 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Transform Tests > AssetWrapperOrSwitch Transform 1`] = `
+{
+  "additionalProperties": {
+    "type": "unknown",
+  },
+  "description": "Mock Asset for test",
+  "extends": undefined,
+  "genericTokens": [
+    {
+      "constraints": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "default": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "symbol": "AnyAsset",
+    },
+  ],
+  "name": "MockAsset",
+  "properties": {
+    "id": {
+      "node": {
+        "description": "Each asset requires a unique id per view",
+        "title": "Asset.id",
+        "type": "string",
+      },
+      "required": true,
+    },
+    "primaryChild": {
+      "node": {
+        "description": "A text-like asset for the action's label",
+        "genericArguments": [
+          {
+            "ref": "AnyAsset",
+            "type": "ref",
+          },
+        ],
+        "ref": "AssetWrapperOrSwitch<AnyAsset>",
+        "title": "ActionAsset.label",
+        "type": "ref",
+      },
+      "required": true,
+    },
+    "secondaryChildren": {
+      "node": {
+        "elementType": {
+          "ref": "Asset",
+          "type": "ref",
+        },
+        "type": "array",
+      },
+      "required": false,
+    },
+    "type": {
+      "node": {
+        "const": "mock",
+        "description": "The asset type determines the semantics of how a user interacts with a page",
+        "title": "Asset.type",
+        "type": "string",
+      },
+      "required": true,
+    },
+    "value": {
+      "node": {
+        "description": "The transition value of the action in the state machine",
+        "title": "MockAsset.value",
+        "type": "string",
+      },
+      "required": false,
+    },
+  },
+  "source": "transform.test.ts",
+  "title": "MockAsset",
+  "type": "object",
+}
+`;
+
+exports[`Transform Tests > CommonProps Transform 1`] = `
+{
+  "additionalProperties": {
+    "type": "unknown",
+  },
+  "description": "Mock Asset for test",
+  "extends": undefined,
+  "genericTokens": [
+    {
+      "constraints": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "default": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "symbol": "AnyAsset",
+    },
+  ],
+  "name": "MockAsset",
+  "properties": {
+    "_comment": {
+      "node": {
+        "description": "Adds a comment for the given node",
+        "type": "string",
+      },
+      "required": false,
+    },
+    "applicability": {
+      "node": {
+        "description": "Evaluate the given expression (or boolean) and if falsy, remove this node from the tree. This is re-computed for each change in the data-model",
+        "name": "Applicability",
+        "or": [
+          {
+            "type": "boolean",
+          },
+          {
+            "ref": "Expression",
+            "type": "ref",
+          },
+        ],
+        "type": "or",
+      },
+      "required": false,
+    },
+    "id": {
+      "node": {
+        "description": "Each asset requires a unique id per view",
+        "title": "Asset.id",
+        "type": "string",
+      },
+      "required": true,
+    },
+    "primaryChild": {
+      "node": {
+        "description": "A text-like asset for the action's label",
+        "genericArguments": [
+          {
+            "ref": "AnyAsset",
+            "type": "ref",
+          },
+        ],
+        "ref": "AssetWrapper<AnyAsset>",
+        "title": "ActionAsset.label",
+        "type": "ref",
+      },
+      "required": true,
+    },
+    "secondaryChildren": {
+      "node": {
+        "elementType": {
+          "ref": "Asset",
+          "type": "ref",
+        },
+        "type": "array",
+      },
+      "required": false,
+    },
+    "type": {
+      "node": {
+        "const": "mock",
+        "description": "The asset type determines the semantics of how a user interacts with a page",
+        "title": "Asset.type",
+        "type": "string",
+      },
+      "required": true,
+    },
+    "value": {
+      "node": {
+        "description": "The transition value of the action in the state machine",
+        "title": "MockAsset.value",
+        "type": "string",
+      },
+      "required": false,
+    },
+  },
+  "source": "transform.test.ts",
+  "title": "MockAsset",
+  "type": "object",
+}
+`;
+
+exports[`Transform Tests > applyTemplateProperty Transform 1`] = `
+{
+  "additionalProperties": {
+    "type": "unknown",
+  },
+  "description": "Mock Asset for test",
+  "extends": undefined,
+  "genericTokens": [
+    {
+      "constraints": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "default": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "symbol": "AnyAsset",
+    },
+  ],
+  "name": "MockAsset",
+  "properties": {
+    "id": {
+      "node": {
+        "description": "Each asset requires a unique id per view",
+        "title": "Asset.id",
+        "type": "string",
+      },
+      "required": true,
+    },
+    "primaryChild": {
+      "node": {
+        "description": "A text-like asset for the action's label",
+        "genericArguments": [
+          {
+            "ref": "AnyAsset",
+            "type": "ref",
+          },
+        ],
+        "ref": "AssetWrapper<AnyAsset>",
+        "title": "ActionAsset.label",
+        "type": "ref",
+      },
+      "required": true,
+    },
+    "secondaryChildren": {
+      "node": {
+        "elementType": {
+          "ref": "Asset",
+          "type": "ref",
+        },
+        "type": "array",
+      },
+      "required": false,
+    },
+    "template": {
+      "node": {
+        "description": "A list of templates to process for this node",
+        "elementType": {
+          "genericArguments": [
+            {
+              "ref": "Asset",
+              "type": "ref",
+            },
+            {
+              "const": "secondaryChildren",
+              "type": "string",
+            },
+          ],
+          "ref": "Template<Asset, "secondaryChildren">",
+          "type": "ref",
+        },
+        "type": "array",
+      },
+      "required": false,
+    },
+    "type": {
+      "node": {
+        "const": "mock",
+        "description": "The asset type determines the semantics of how a user interacts with a page",
+        "title": "Asset.type",
+        "type": "string",
+      },
+      "required": true,
+    },
+    "value": {
+      "node": {
+        "description": "The transition value of the action in the state machine",
+        "title": "MockAsset.value",
+        "type": "string",
+      },
+      "required": false,
+    },
+  },
+  "source": "transform.test.ts",
+  "title": "MockAsset",
+  "type": "object",
+}
+`;
+
+exports[`Transform Tests > applyValueRefs Transform 1`] = `
+{
+  "additionalProperties": {
+    "type": "unknown",
+  },
+  "description": "Mock Asset for test",
+  "extends": undefined,
+  "genericTokens": [
+    {
+      "constraints": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "default": {
+        "ref": "Asset",
+        "type": "ref",
+      },
+      "symbol": "AnyAsset",
+    },
+  ],
+  "name": "MockAsset",
+  "properties": {
+    "id": {
+      "node": {
+        "description": "Each asset requires a unique id per view",
+        "title": "Asset.id",
+        "type": "string",
+      },
+      "required": true,
+    },
+    "primaryChild": {
+      "node": {
+        "description": "A text-like asset for the action's label",
+        "genericArguments": [
+          {
+            "ref": "AnyAsset",
+            "type": "ref",
+          },
+        ],
+        "ref": "AssetWrapper<AnyAsset>",
+        "title": "ActionAsset.label",
+        "type": "ref",
+      },
+      "required": true,
+    },
+    "secondaryChildren": {
+      "node": {
+        "elementType": {
+          "ref": "Asset",
+          "type": "ref",
+        },
+        "type": "array",
+      },
+      "required": false,
+    },
+    "type": {
+      "node": {
+        "description": "The asset type determines the semantics of how a user interacts with a page",
+        "or": [
+          {
+            "const": "mock",
+            "description": "The asset type determines the semantics of how a user interacts with a page",
+            "title": "Asset.type",
+            "type": "string",
+          },
+          {
+            "ref": "ExpressionRef",
+            "type": "ref",
+          },
+          {
+            "ref": "BindingRef",
+            "type": "ref",
+          },
+        ],
+        "type": "or",
+      },
+      "required": true,
+    },
+    "value": {
+      "node": {
+        "description": "The transition value of the action in the state machine",
+        "or": [
+          {
+            "description": "The transition value of the action in the state machine",
+            "title": "MockAsset.value",
+            "type": "string",
+          },
+          {
+            "ref": "ExpressionRef",
+            "type": "ref",
+          },
+          {
+            "ref": "BindingRef",
+            "type": "ref",
+          },
+        ],
+        "type": "or",
+      },
+      "required": false,
+    },
+  },
+  "source": "transform.test.ts",
+  "title": "MockAsset",
+  "type": "object",
+}
+`;

@@ -1,0 +1,12 @@
+{
+  "name": "@player-lang/functional-dsl-generator",
+  "version": "0.0.0-PLACEHOLDER",
+  "main": "src/index.ts",
+  "bin": {
+    "functional-generator": "./dist/cli.mjs"
+  },
+  "devDependencies": {
+    "@player-lang/functional-dsl": "workspace:*",
+    "@player-lang/test-utils": "workspace:*"
+  }
+}

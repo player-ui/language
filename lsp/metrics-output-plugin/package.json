@@ -1,0 +1,12 @@
+{
+  "name": "@player-lang/metrics-output-plugin",
+  "version": "0.0.0-PLACEHOLDER",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@player-lang/json-language-service": "workspace:*"
+  },
+  "devDependencies": {
+    "@player-lang/static-xlrs": "workspace:*",
+    "@player-lang/complexity-check-plugin": "workspace:*"
+  }
+}
