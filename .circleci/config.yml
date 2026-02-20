@@ -21,12 +21,22 @@ executors:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
 
 commands:
+  setup_auth:
+      description: Configure authentication for deployments
+      steps:
+        - add_ssh_keys:
+            fingerprints:
+              - "SHA256:hUAWVYdfSW5ml6ufbfyEHUcuPwUJ88xVhsZc21b2lA8"
+        - run: mkdir -p ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+        - run: git config --global user.name "Intuit Service"
+        - run: git config --global user.email "opensource-svc@intuit.com"
+
   auto_shipit:
     description: Perform Auto shipit
     steps:
       - attach_workspace:
           at: ~/lang
-
+      - setup_auth
       - run: echo "//registry.npmjs.com/:_authToken=$NPM_TOKEN" >> ~/.npmrc
       - run: echo -e $GPG_KEY | gpg --import --batch
       - run: |
