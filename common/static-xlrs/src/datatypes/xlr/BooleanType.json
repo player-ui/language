@@ -1,0 +1,72 @@
+{
+    "source": "/private/var/tmp/_bazel_kreddy8/6fc13ccb395252816f0c23d8394e8532/sandbox/darwin-sandbox/1788/execroot/_main/bazel-out/darwin_arm64-fastbuild/bin/plugins/common-types/core/src/data-types/types.ts",
+    "name": "BooleanType",
+    "type": "object",
+    "properties": {
+        "type": {
+            "required": true,
+            "node": {
+                "type": "string",
+                "const": "BooleanType"
+            }
+        },
+        "default": {
+            "required": true,
+            "node": {
+                "type": "boolean",
+                "const": false
+            }
+        },
+        "validation": {
+            "required": true,
+            "node": {
+                "type": "array",
+                "elementType": {
+                    "type": "any"
+                },
+                "const": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "required": true,
+                                "node": {
+                                    "type": "string",
+                                    "const": "oneOf"
+                                }
+                            },
+                            "message": {
+                                "required": true,
+                                "node": {
+                                    "type": "string",
+                                    "const": "Value must be true or false"
+                                }
+                            },
+                            "options": {
+                                "required": true,
+                                "node": {
+                                    "type": "array",
+                                    "elementType": {
+                                        "type": "any"
+                                    },
+                                    "const": [
+                                        {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        {
+                                            "type": "boolean",
+                                            "const": false
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                ]
+            }
+        }
+    },
+    "additionalProperties": false
+}

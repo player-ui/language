@@ -1,0 +1,26 @@
+{
+    "pluginName": "CommonTypes",
+    "capabilities": {
+        "Assets": [],
+        "Views": [],
+        "Expressions": [],
+        "DataTypes": [
+            "BooleanType",
+            "IntegerType",
+            "IntegerPosType",
+            "IntegerNNType",
+            "StringType",
+            "CollectionType",
+            "DateType",
+            "PhoneType"
+        ]
+    },
+    "customPrimitives": [
+        "Expression",
+        "Asset",
+        "Binding",
+        "AssetWrapper",
+        "Schema.DataType",
+        "ExpressionHandler"
+    ]
+}

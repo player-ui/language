@@ -1,0 +1,75 @@
+{
+    "source": "/private/var/tmp/_bazel_kreddy8/6fc13ccb395252816f0c23d8394e8532/sandbox/darwin-sandbox/1788/execroot/_main/bazel-out/darwin_arm64-fastbuild/bin/plugins/common-types/core/src/data-types/types.ts",
+    "name": "IntegerNNType",
+    "type": "object",
+    "properties": {
+        "type": {
+            "required": true,
+            "node": {
+                "type": "string",
+                "const": "IntegerNNType"
+            }
+        },
+        "validation": {
+            "required": true,
+            "node": {
+                "type": "array",
+                "elementType": {
+                    "type": "any"
+                },
+                "const": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "required": true,
+                                "node": {
+                                    "type": "string",
+                                    "const": "integer"
+                                }
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "required": true,
+                                "node": {
+                                    "type": "string",
+                                    "const": "min"
+                                }
+                            },
+                            "value": {
+                                "required": true,
+                                "node": {
+                                    "type": "number",
+                                    "const": 0
+                                }
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                ]
+            }
+        },
+        "format": {
+            "required": true,
+            "node": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "required": true,
+                        "node": {
+                            "type": "string",
+                            "const": "integer"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "additionalProperties": false
+}
