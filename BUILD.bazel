@@ -2,6 +2,7 @@ load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@npm//:tsconfig-to-swcconfig/package_json.bzl", tsconfig_to_swcconfig = "bin")
+load("@rules_kotlin//kotlin:core.bzl", "kt_kotlinc_options")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -96,4 +97,10 @@ tsconfig_to_swcconfig.t2s(
     ],
     stdout = ".swcrc",
     visibility = ["//:__subpackages__"],
+)
+
+kt_kotlinc_options(
+    name = "kt_opts",
+    jvm_target = "21",
+    visibility = ["//visibility:public"],
 )

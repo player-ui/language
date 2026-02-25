@@ -1,0 +1,38 @@
+load("@rules_player//kotlin:defs.bzl", "kt_jvm")
+load("@rules_kotlin//kotlin:lint.bzl", "ktlint_config")
+load("@build_constants//:constants.bzl", "GROUP", "VERSION")
+
+package(default_visibility = ["//visibility:public"])
+
+ktlint_config(
+    name = "lint_config",
+    editorconfig = ".editorconfig",
+)
+
+kt_jvm(
+    name = "kotlin-dsl-generator",
+    group = GROUP,
+    version = VERSION,
+    lint_config = ":lint_config",
+    main_opts = "//:kt_opts",
+    main_deps = [
+        "//dsl/kotlin:kotlin_serialization",
+        "@maven//:com_intuit_playerui_xlr_xlr_types",
+        "@maven//:com_squareup_kotlinpoet_jvm",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+    test_package = "com.intuit.playerui.lang.generator",
+    test_opts = "//:kt_opts",
+    test_deps = [
+        "@maven//:com_intuit_playerui_xlr_xlr_types",
+        "@maven//:io_kotest_kotest_assertions_core",
+        "@maven//:io_kotest_kotest_assertions_json",
+        "@maven//:io_kotest_kotest_runner_junit5",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+    test_resources = glob(["src/test/kotlin/**/fixtures/*.json"]),
+    test_resource_strip_prefix = "generators/kotlin/src/test/kotlin/com/intuit/playerui/lang/generator/fixtures",
+    pom_template = ":pom.tpl",
+)
