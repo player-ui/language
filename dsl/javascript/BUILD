@@ -11,10 +11,6 @@ vitest_config(name = "vitest_config")
 js_pipeline(
     package_name = "@player-lang/functional-dsl",
     srcs = glob(["src/**/*"]),
-    test_deps = [
-        "//:node_modules",
-        "//:vitest_config",
-    ],
     deps = [
         "//:node_modules/@player-ui/types",
         "//:node_modules/dequal",

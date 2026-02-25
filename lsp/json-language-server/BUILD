@@ -10,10 +10,6 @@ vitest_config(name = "vitest_config")
 
 js_pipeline(
     package_name = "@player-lang/json-language-server",
-    test_deps = [
-        "//:node_modules",
-        "//:vitest_config",
-    ],
     deps = [
         ":node_modules/@player-lang/json-language-service",
         "//:node_modules/vscode-languageserver",

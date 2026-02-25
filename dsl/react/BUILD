@@ -14,10 +14,6 @@ js_pipeline(
         "//:node_modules/react",
         "//:node_modules/@types/react",
     ],
-    test_deps = [
-        "//:node_modules",
-        "//:vitest_config",
-    ],
     deps = [
         "//:node_modules/@player-ui/player",
         "//:node_modules/@player-ui/types",
