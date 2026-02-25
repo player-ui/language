@@ -112,20 +112,6 @@ exports[`player language service > hover > basic hover docs 3`] = `
 exports[`player language service > validation > throws AssetWrapper errors 1`] = `
 [
   {
-    "message": "Content Validation Error - type: Expected type "string" but got "null"",
-    "range": {
-      "end": {
-        "character": 28,
-        "line": 20,
-      },
-      "start": {
-        "character": 16,
-        "line": 20,
-      },
-    },
-    "severity": 1,
-  },
-  {
     "message": "Content Validation Error - missing: Property "BEGIN" missing from type "Navigation"",
     "range": {
       "end": {
