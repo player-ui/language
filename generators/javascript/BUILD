@@ -16,12 +16,12 @@ js_pipeline(
         ":node_modules/@player-lang/functional-dsl",
     ],
     deps = [
-        "//:node_modules/@xlr-lib/xlr",
-        "//:node_modules/@xlr-lib/xlr-utils",
         "//:node_modules/ts-morph",
         "//:node_modules/typescript",
     ],
     peer_deps = [
+        "//:node_modules/@xlr-lib/xlr",
+        "//:node_modules/@xlr-lib/xlr-utils",
         "//:node_modules/@player-ui/types",
     ]
 )

@@ -14,9 +14,6 @@ js_pipeline(
         ":node_modules/@player-lang/static-xlrs",
     ] + COMMON_TEST_DEPS,
     deps = [
-        "//:node_modules/@xlr-lib/xlr",
-        "//:node_modules/@xlr-lib/xlr-sdk",
-        "//:node_modules/@xlr-lib/xlr-utils",
         "//:node_modules/@player-ui/player",
         "//:node_modules/detect-indent",
         "//:node_modules/jsonc-parser",
@@ -26,4 +23,9 @@ js_pipeline(
         "//:node_modules/vscode-languageserver-textdocument",
         "//:node_modules/vscode-languageserver-types",
     ],
+    peer_deps = [
+        "//:node_modules/@xlr-lib/xlr",
+        "//:node_modules/@xlr-lib/xlr-sdk",
+        "//:node_modules/@xlr-lib/xlr-utils",
+    ]
 )
