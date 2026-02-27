@@ -60,7 +60,7 @@ class AuxiliaryStorage {
      * Gets a list by typed list key, returning empty list if not found.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> getList(key: TypedListKey<T>): List<T> = (data[key.name] as? List<T>) ?: emptyList()
+    fun <T : Any> getList(key: TypedListKey<T>): List<T> = data[key.name] as? List<T> ?: emptyList()
 
     /**
      * Checks if a typed key exists.

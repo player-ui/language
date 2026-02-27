@@ -1,0 +1,95 @@
+# Detekt configuration for Player Language Kotlin modules.
+# Used with build_upon_default_config = True, so only overrides are needed.
+# ktlint handles naming, comments, and formatting — those rulesets are disabled here.
+
+complexity:
+  active: true
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 25
+  LongMethod:
+    active: true
+    threshold: 80
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 10
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 40
+    thresholdInClasses: 30
+    thresholdInInterfaces: 15
+    thresholdInObjects: 20
+  NestedBlockDepth:
+    active: true
+    threshold: 6
+  NestedScopeFunctions:
+    active: true
+    threshold: 3
+
+coroutines:
+  active: true
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+
+naming:
+  active: false
+
+comments:
+  active: false
+
+potential-bugs:
+  active: true
+
+style:
+  active: true
+  ForbiddenComment:
+    active: false
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: false
+  NewLineAtEndOfFile:
+    active: false
+  NoTabs:
+    active: false
+  OptionalAbstractKeyword:
+    active: false
+  BracesOnWhenStatements:
+    active: false
+  ReturnCount:
+    active: false
+  ThrowsCount:
+    active: false
+  TrailingWhitespace:
+    active: false
+  WildcardImport:
+    active: false
+  UnusedImports:
+    active: true
+  UnusedParameter:
+    active: true
+  UnusedPrivateClass:
+    active: true
+  UnusedPrivateMember:
+    active: true
+  UnusedPrivateProperty:
+    active: true
+  UnnecessaryAbstractClass:
+    active: true
+  UnnecessaryAnnotationUseSiteTarget:
+    active: true
+  UnnecessaryApply:
+    active: true
+  UnnecessaryFilter:
+    active: true
+  UnnecessaryInheritance:
+    active: true
+  UnnecessaryLet:
+    active: true
+  UnnecessaryParentheses:
+    active: true

@@ -2,6 +2,7 @@ load("@rules_player//kotlin:defs.bzl", "kt_jvm")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:lint.bzl", "ktlint_config")
+load("@rules_detekt//detekt:defs.bzl", "detekt_test")
 load("@build_constants//:constants.bzl", "GROUP", "VERSION")
 
 package(default_visibility = ["//visibility:public"])
@@ -24,6 +25,15 @@ kt_jvm_library(
     srcs = [],
     exported_compiler_plugins = [":serialization_plugin"],
     exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json"],
+)
+
+detekt_test(
+    name = "detekt",
+    srcs = glob(["src/main/kotlin/**/*.kt", "src/test/kotlin/**/*.kt"]),
+    cfgs = ["//:detekt.yml"],
+    build_upon_default_config = True,
+    html_report = True,
+    tags = ["manual"],
 )
 
 kt_jvm(

@@ -89,7 +89,10 @@ private fun generateSchemaBindings(parsedArgs: ParsedArgs) {
         println("  Generated: ${result.className} -> ${outputFile.absolutePath}")
         println()
         println("Generation complete: 1 succeeded, 0 failed")
-    } catch (e: Exception) {
+    } catch (e: java.io.IOException) {
+        System.err.println("  Error processing ${schemaFile.name}: ${e.message}")
+        exitProcess(1)
+    } catch (e: IllegalArgumentException) {
         System.err.println("  Error processing ${schemaFile.name}: ${e.message}")
         exitProcess(1)
     }
@@ -123,7 +126,10 @@ private fun generateAssetBuilders(parsedArgs: ParsedArgs) {
             val result = generator.generateFromFile(file)
             println("  Generated: ${result.className} -> ${result.filePath.absolutePath}")
             successCount++
-        } catch (e: Exception) {
+        } catch (e: java.io.IOException) {
+            System.err.println("  Error processing ${file.name}: ${e.message}")
+            errorCount++
+        } catch (e: IllegalArgumentException) {
             System.err.println("  Error processing ${file.name}: ${e.message}")
             errorCount++
         }

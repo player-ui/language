@@ -72,7 +72,7 @@ object TypeMapper {
             is VoidType -> KotlinTypeInfo("Unit", isNullable = false)
             is NeverType -> KotlinTypeInfo("Nothing", isNullable = false)
             is RefType -> mapRefType(node, context)
-            is ObjectType -> mapObjectType(node, context)
+            is ObjectType -> mapObjectType(node)
             is ArrayType -> mapArrayType(node, context)
             is OrType -> mapOrType(node, context)
             is RecordType -> mapRecordType(node, context)
@@ -150,10 +150,7 @@ object TypeMapper {
         )
     }
 
-    private fun mapObjectType(
-        node: ObjectType,
-        context: TypeMapperContext,
-    ): KotlinTypeInfo {
+    private fun mapObjectType(node: ObjectType): KotlinTypeInfo {
         // Inline objects become nested classes
         return KotlinTypeInfo(
             typeName = "Map<String, Any?>",

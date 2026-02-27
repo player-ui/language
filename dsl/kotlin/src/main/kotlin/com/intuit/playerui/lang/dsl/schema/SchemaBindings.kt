@@ -112,24 +112,12 @@ object SchemaBindingsExtractor {
                 return SchemaBindings(mapOf(propName to createBinding(typeName, arrayPath)))
             }
 
-            val typeNode = schema[typeName]
-            if (typeNode != null) {
-                val newVisited = HashSet(visited)
-                newVisited.add(typeName)
-                return processNode(typeNode, schema, arrayPath, newVisited)
-            }
-            return createBinding("StringType", arrayPath)
+            return resolveComplexType(typeName, schema, arrayPath, visited)
         }
 
         // Handle records
         if (dataType.isRecord == true) {
-            val typeNode = schema[typeName]
-            if (typeNode != null) {
-                val newVisited = HashSet(visited)
-                newVisited.add(typeName)
-                return processNode(typeNode, schema, path, newVisited)
-            }
-            return createBinding("StringType", path)
+            return resolveComplexType(typeName, schema, path, visited)
         }
 
         // Handle primitives
@@ -138,14 +126,21 @@ object SchemaBindingsExtractor {
         }
 
         // Handle complex types (look up type definition in schema)
+        return resolveComplexType(typeName, schema, path, visited)
+    }
+
+    private fun resolveComplexType(
+        typeName: String,
+        schema: Schema,
+        path: String,
+        visited: MutableSet<String>,
+    ): Any {
         val typeNode = schema[typeName]
         if (typeNode != null) {
             val newVisited = HashSet(visited)
             newVisited.add(typeName)
             return processNode(typeNode, schema, path, newVisited)
         }
-
-        // Fallback: unknown type, treat as string binding
         return createBinding("StringType", path)
     }
 

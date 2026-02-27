@@ -296,8 +296,19 @@ object BuildPipeline {
                     )
                 }
 
+            // If this property is an array type (e.g., actions: Array<AssetWrapper<T>>),
+            // wrap the switch result in an array to match the expected schema type.
+            // Only wrap if we're replacing the entire property (path.size == 1),
+            // not a specific element in the array (path.size > 1)
+            val propertyName = path.firstOrNull()?.toString() ?: ""
+            var switchResult: Any = mapOf(switchKey to resolvedCases)
+
+            if (propertyName in arrayProperties && path.size == 1) {
+                switchResult = listOf(switchResult)
+            }
+
             // Inject switch at the specified path
-            injectAtPath(result, path, mapOf(switchKey to resolvedCases))
+            injectAtPath(result, path, switchResult)
         }
     }
 
@@ -438,23 +449,13 @@ object BuildPipeline {
                         val existing = map[segment]
                         if (existing is Map<*, *> && value is Map<*, *>) {
                             @Suppress("UNCHECKED_CAST")
-                            map[segment] = (existing as Map<String, Any?>) + (value as Map<String, Any?>)
+                            val existingMap = existing as Map<String, Any?>
+
+                            @Suppress("UNCHECKED_CAST")
+                            val valueMap = value as Map<String, Any?>
+                            map[segment] = existingMap + valueMap
                         } else {
                             map[segment] = value
-                        }
-                    }
-
-                    current is MutableList<*> && segment is Int -> {
-                        @Suppress("UNCHECKED_CAST")
-                        val list = current as MutableList<Any?>
-                        if (segment < list.size) {
-                            val existing = list[segment]
-                            if (existing is Map<*, *> && value is Map<*, *>) {
-                                @Suppress("UNCHECKED_CAST")
-                                list[segment] = (existing as Map<String, Any?>) + (value as Map<String, Any?>)
-                            } else {
-                                list[segment] = value
-                            }
                         }
                     }
                 }

@@ -31,9 +31,8 @@ fun peekId(context: BuildContext): String = generateBaseId(context)
  */
 private fun generateBaseId(context: BuildContext): String {
     val parentId = context.parentId
-    val branch = context.branch
 
-    return when (branch) {
+    return when (val branch = context.branch) {
         null -> {
             parentId
         }

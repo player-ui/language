@@ -13,3 +13,7 @@ test-py:
 [doc('Lint all PY Files')]
 lint-py:
     bazel test -- $(bazel query "kind(py_test, //...) intersect attr(name, '_lint$', //...)" --output label 2>/dev/null | tr '\n' ' ')
+
+[doc('Run detekt static analysis on Kotlin modules')]
+detekt:
+    bazel test -- $(bazel query "attr(name, 'detekt', //...)" --output label 2>/dev/null | tr '\n' ' ')

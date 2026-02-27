@@ -1,5 +1,6 @@
 load("@rules_player//kotlin:defs.bzl", "kt_jvm")
 load("@rules_kotlin//kotlin:lint.bzl", "ktlint_config")
+load("@rules_detekt//detekt:defs.bzl", "detekt_test")
 load("@build_constants//:constants.bzl", "GROUP", "VERSION")
 
 package(default_visibility = ["//visibility:public"])
@@ -7,6 +8,15 @@ package(default_visibility = ["//visibility:public"])
 ktlint_config(
     name = "lint_config",
     editorconfig = ".editorconfig",
+)
+
+detekt_test(
+    name = "detekt",
+    srcs = glob(["src/main/kotlin/**/*.kt", "src/test/kotlin/**/*.kt"]),
+    cfgs = ["//:detekt.yml"],
+    build_upon_default_config = True,
+    html_report = True,
+    tags = ["manual"],
 )
 
 kt_jvm(

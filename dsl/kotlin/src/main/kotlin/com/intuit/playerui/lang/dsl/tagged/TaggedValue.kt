@@ -105,16 +105,14 @@ class Expression<T>(
 
                 ')' -> {
                     openParens--
-                    if (openParens < 0) {
-                        throw IllegalArgumentException(
-                            "Unexpected ) at character $index in expression: $expression",
-                        )
+                    require(openParens >= 0) {
+                        "Unexpected ) at character $index in expression: $expression"
                     }
                 }
             }
         }
-        if (openParens > 0) {
-            throw IllegalArgumentException("Expected ) in expression: $expression")
+        require(openParens <= 0) {
+            "Expected ) in expression: $expression"
         }
     }
 }

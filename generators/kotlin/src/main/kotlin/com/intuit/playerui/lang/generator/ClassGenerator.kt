@@ -670,8 +670,16 @@ class ClassGenerator(
 
     private fun buildSetInitializer(names: List<String>): CodeBlock {
         if (names.isEmpty()) return CodeBlock.of("emptySet()")
-        val format = names.joinToString(", ") { "%S" }
-        return CodeBlock.of("setOf($format)", *names.toTypedArray())
+        return CodeBlock
+            .builder()
+            .apply {
+                add("setOf(")
+                names.forEachIndexed { index, name ->
+                    if (index > 0) add(", ")
+                    add("%S", name)
+                }
+                add(")")
+            }.build()
     }
 
     companion object {
