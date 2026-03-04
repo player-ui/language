@@ -1,5 +1,24 @@
 package com.intuit.playerui.lang.generator
 
+import com.intuit.playerui.lang.generator.PoetTypes.ANY
+import com.intuit.playerui.lang.generator.PoetTypes.ASSET_WRAPPER_BUILDER
+import com.intuit.playerui.lang.generator.PoetTypes.BINDING
+import com.intuit.playerui.lang.generator.PoetTypes.BOOLEAN
+import com.intuit.playerui.lang.generator.PoetTypes.BUILDER_SUPERCLASS
+import com.intuit.playerui.lang.generator.PoetTypes.BUILD_CONTEXT
+import com.intuit.playerui.lang.generator.PoetTypes.FLUENT_BUILDER_BASE_STAR
+import com.intuit.playerui.lang.generator.PoetTypes.FLUENT_DSL_MARKER
+import com.intuit.playerui.lang.generator.PoetTypes.LIST
+import com.intuit.playerui.lang.generator.PoetTypes.MAP
+import com.intuit.playerui.lang.generator.PoetTypes.MAP_STRING_ANY
+import com.intuit.playerui.lang.generator.PoetTypes.NOTHING
+import com.intuit.playerui.lang.generator.PoetTypes.NUMBER
+import com.intuit.playerui.lang.generator.PoetTypes.SET
+import com.intuit.playerui.lang.generator.PoetTypes.STAR
+import com.intuit.playerui.lang.generator.PoetTypes.STRING
+import com.intuit.playerui.lang.generator.PoetTypes.TAGGED_VALUE
+import com.intuit.playerui.lang.generator.PoetTypes.UNIT
+import com.intuit.playerui.xlr.ArrayType
 import com.intuit.playerui.xlr.ObjectProperty
 import com.intuit.playerui.xlr.ObjectType
 import com.intuit.playerui.xlr.ParamTypeNode
@@ -109,13 +128,25 @@ class ClassGenerator(
 
         objectType.description?.let { builder.addKdoc("%L", it) }
 
+        addOverrideProperties(builder, assetType)
+        addIdProperty(builder)
+
+        // Schema-driven properties
+        collectProperties().forEach { prop ->
+            addPropertyMembers(builder, prop, className, generateWithMethods = true)
+        }
+
+        addBuildAndCloneMethods(builder, className)
+
+        return builder.build()
+    }
+
+    private fun addOverrideProperties(
+        builder: TypeSpec.Builder,
+        assetType: String?,
+    ) {
         // defaults property
-        val defaultsInit =
-            if (assetType != null) {
-                CodeBlock.of("mapOf(%S to %S)", "type", assetType)
-            } else {
-                CodeBlock.of("emptyMap()")
-            }
+        val defaultsInit = buildDefaultsInitializer(assetType)
         builder.addProperty(
             PropertySpec
                 .builder("defaults", MAP_STRING_ANY)
@@ -125,7 +156,7 @@ class ClassGenerator(
         )
 
         // assetWrapperProperties
-        val awProps = collectProperties().filter { it.isAssetWrapper && !it.isArray }
+        val awProps = collectProperties().filter { it.isAssetWrapper }
         builder.addProperty(
             PropertySpec
                 .builder("assetWrapperProperties", SET.parameterizedBy(STRING))
@@ -144,7 +175,22 @@ class ClassGenerator(
                 .build(),
         )
 
-        // id property
+        // assetWrapperPaths — nested paths to AssetWrapper properties within intermediate objects
+        val awPaths = findAssetWrapperPaths(objectType)
+        if (awPaths.isNotEmpty()) {
+            builder.addProperty(
+                PropertySpec
+                    .builder(
+                        "assetWrapperPaths",
+                        LIST.parameterizedBy(LIST.parameterizedBy(STRING)),
+                    ).addModifiers(KModifier.OVERRIDE)
+                    .initializer(buildNestedListInitializer(awPaths))
+                    .build(),
+            )
+        }
+    }
+
+    private fun addIdProperty(builder: TypeSpec.Builder) {
         builder.addProperty(
             PropertySpec
                 .builder("id", STRING.copy(nullable = true))
@@ -163,13 +209,12 @@ class ClassGenerator(
                         .build(),
                 ).build(),
         )
+    }
 
-        // Schema-driven properties
-        collectProperties().forEach { prop ->
-            addPropertyMembers(builder, prop, className, generateWithMethods = true)
-        }
-
-        // build method
+    private fun addBuildAndCloneMethods(
+        builder: TypeSpec.Builder,
+        className: String,
+    ) {
         builder.addFunction(
             FunSpec
                 .builder("build")
@@ -180,7 +225,6 @@ class ClassGenerator(
                 .build(),
         )
 
-        // clone method
         val classType = ClassName(packageName, className)
         builder.addFunction(
             FunSpec
@@ -190,8 +234,6 @@ class ClassGenerator(
                 .addStatement("return %T().also { cloneStorageTo(it) }", classType)
                 .build(),
         )
-
-        return builder.build()
     }
 
     private fun addPropertyMembers(
@@ -574,6 +616,30 @@ class ClassGenerator(
         return className
     }
 
+    private fun buildDefaultsInitializer(assetType: String?): CodeBlock {
+        val defaults = DefaultValueGenerator.generateDefaults(objectType, assetType)
+        if (defaults.isEmpty()) return CodeBlock.of("emptyMap()")
+
+        val builder = CodeBlock.builder().add("mapOf(")
+        defaults.entries.forEachIndexed { index, (key, value) ->
+            if (index > 0) builder.add(", ")
+            when (value) {
+                is String -> builder.add("%S to %S", key, value)
+                is Number -> {
+                    val numValue = if (value is Double && value % 1.0 == 0.0) value.toInt() else value
+                    builder.add("%S to %L", key, numValue)
+                }
+                is Boolean -> builder.add("%S to %L", key, value)
+                is List<*> -> builder.add("%S to emptyList<Any?>()", key)
+                is Map<*, *> -> builder.add("%S to emptyMap<String, Any?>()", key)
+                null -> builder.add("%S to null", key)
+                else -> builder.add("%S to %S", key, value.toString())
+            }
+        }
+        builder.add(")")
+        return builder.build()
+    }
+
     private fun collectProperties(): List<PropertyInfo> = cachedProperties
 
     private fun createPropertyInfo(
@@ -668,6 +734,59 @@ class ClassGenerator(
         return -1
     }
 
+    /**
+     * Recursively finds all paths to AssetWrapper properties within an ObjectType.
+     * Returns paths with length >= 2 (single-level paths are handled by assetWrapperProperties).
+     */
+    private fun findAssetWrapperPaths(
+        rootType: ObjectType,
+        currentPath: List<String> = emptyList(),
+        visited: MutableSet<String> = mutableSetOf(),
+    ): List<List<String>> {
+        val paths = mutableListOf<List<String>>()
+
+        for ((propName, prop) in rootType.properties) {
+            val node = prop.node
+            val fullPath = currentPath + propName
+
+            when {
+                // Direct AssetWrapper property
+                isAssetWrapperRef(node) -> {
+                    if (fullPath.size >= 2) paths.add(fullPath)
+                }
+                // Array of AssetWrappers
+                node is ArrayType && isAssetWrapperRef(node.elementType) -> {
+                    if (fullPath.size >= 2) paths.add(fullPath)
+                }
+                // Nested ObjectType — recurse
+                node is ObjectType -> {
+                    val typeName = node.name
+                    if (typeName != null && typeName in visited) continue
+                    if (typeName != null) visited.add(typeName)
+                    paths.addAll(findAssetWrapperPaths(node, fullPath, visited))
+                    if (typeName != null) visited.remove(typeName)
+                }
+            }
+        }
+
+        return paths
+    }
+
+    private fun buildNestedListInitializer(paths: List<List<String>>): CodeBlock {
+        val builder = CodeBlock.builder().add("listOf(")
+        paths.forEachIndexed { index, path ->
+            if (index > 0) builder.add(", ")
+            builder.add("listOf(")
+            path.forEachIndexed { pathIndex, segment ->
+                if (pathIndex > 0) builder.add(", ")
+                builder.add("%S", segment)
+            }
+            builder.add(")")
+        }
+        builder.add(")")
+        return builder.build()
+    }
+
     private fun buildSetInitializer(names: List<String>): CodeBlock {
         if (names.isEmpty()) return CodeBlock.of("emptySet()")
         return CodeBlock
@@ -683,31 +802,6 @@ class ClassGenerator(
     }
 
     companion object {
-        // Kotlin stdlib types (replacing KotlinPoet's top-level constants that don't work through KMP metadata)
-        val STRING = ClassName("kotlin", "String")
-        val BOOLEAN = ClassName("kotlin", "Boolean")
-        val NUMBER = ClassName("kotlin", "Number")
-        val ANY = ClassName("kotlin", "Any")
-        val NOTHING = ClassName("kotlin", "Nothing")
-        val UNIT = ClassName("kotlin", "Unit")
-        val LIST = ClassName("kotlin.collections", "List")
-        val MAP = ClassName("kotlin.collections", "Map")
-        val SET = ClassName("kotlin.collections", "Set")
-        val STAR = WildcardTypeName.producerOf(ANY)
-
-        // DSL framework types
-        val FLUENT_DSL_MARKER = ClassName("com.intuit.playerui.lang.dsl", "FluentDslMarker")
-        val FLUENT_BUILDER_BASE = ClassName("com.intuit.playerui.lang.dsl.core", "FluentBuilderBase")
-        val ASSET_WRAPPER_BUILDER = ClassName("com.intuit.playerui.lang.dsl.core", "AssetWrapperBuilder")
-        val BUILD_CONTEXT = ClassName("com.intuit.playerui.lang.dsl.core", "BuildContext")
-        val BINDING = ClassName("com.intuit.playerui.lang.dsl.tagged", "Binding")
-        val TAGGED_VALUE = ClassName("com.intuit.playerui.lang.dsl.tagged", "TaggedValue")
-
-        // Parameterized types
-        val MAP_STRING_ANY = MAP.parameterizedBy(STRING, ANY.copy(nullable = true))
-        val FLUENT_BUILDER_BASE_STAR = FLUENT_BUILDER_BASE.parameterizedBy(STAR)
-        val BUILDER_SUPERCLASS = FLUENT_BUILDER_BASE.parameterizedBy(MAP_STRING_ANY)
-
         private val PRIMITIVE_OVERLOAD_TYPES = setOf("String", "Number", "Boolean")
 
         /**
@@ -731,4 +825,31 @@ class ClassGenerator(
         private fun withMethodName(poetName: String): String =
             "with${poetName.replaceFirstChar { it.uppercase() }}"
     }
+}
+
+/**
+ * KotlinPoet type name constants used during code generation.
+ */
+internal object PoetTypes {
+    val STRING = ClassName("kotlin", "String")
+    val BOOLEAN = ClassName("kotlin", "Boolean")
+    val NUMBER = ClassName("kotlin", "Number")
+    val ANY = ClassName("kotlin", "Any")
+    val NOTHING = ClassName("kotlin", "Nothing")
+    val UNIT = ClassName("kotlin", "Unit")
+    val LIST = ClassName("kotlin.collections", "List")
+    val MAP = ClassName("kotlin.collections", "Map")
+    val SET = ClassName("kotlin.collections", "Set")
+    val STAR = WildcardTypeName.producerOf(ANY)
+
+    val FLUENT_DSL_MARKER = ClassName("com.intuit.playerui.lang.dsl", "FluentDslMarker")
+    val FLUENT_BUILDER_BASE = ClassName("com.intuit.playerui.lang.dsl.core", "FluentBuilderBase")
+    val ASSET_WRAPPER_BUILDER = ClassName("com.intuit.playerui.lang.dsl.core", "AssetWrapperBuilder")
+    val BUILD_CONTEXT = ClassName("com.intuit.playerui.lang.dsl.core", "BuildContext")
+    val BINDING = ClassName("com.intuit.playerui.lang.dsl.tagged", "Binding")
+    val TAGGED_VALUE = ClassName("com.intuit.playerui.lang.dsl.tagged", "TaggedValue")
+
+    val MAP_STRING_ANY = MAP.parameterizedBy(STRING, ANY.copy(nullable = true))
+    val FLUENT_BUILDER_BASE_STAR = FLUENT_BUILDER_BASE.parameterizedBy(STAR)
+    val BUILDER_SUPERCLASS = FLUENT_BUILDER_BASE.parameterizedBy(MAP_STRING_ANY)
 }

@@ -1,5 +1,6 @@
 package com.intuit.playerui.lang.generator
 
+import com.intuit.playerui.xlr.AndType
 import com.intuit.playerui.xlr.AnyType
 import com.intuit.playerui.xlr.ArrayType
 import com.intuit.playerui.xlr.BooleanType
@@ -75,6 +76,7 @@ object TypeMapper {
             is ObjectType -> mapObjectType(node)
             is ArrayType -> mapArrayType(node, context)
             is OrType -> mapOrType(node, context)
+            is AndType -> mapAndType(node, context)
             is RecordType -> mapRecordType(node, context)
             else -> KotlinTypeInfo("Any?", isNullable = true)
         }
@@ -99,15 +101,22 @@ object TypeMapper {
         context.genericTokens[ref]?.let { token ->
             token.default?.let { return mapToKotlinType(it, context) }
             token.constraints?.let { return mapToKotlinType(it, context) }
+            // Unresolvable generic token: treat as Any?
+            return KotlinTypeInfo(
+                typeName = "Any?",
+                isNullable = true,
+                description = node.description,
+            )
         }
 
-        // Check for AssetWrapper
+        // Check for AssetWrapper — extract inner type from generic arguments
         if (isAssetWrapperRef(node)) {
+            val innerType = extractAssetWrapperInnerType(node, context)
             return KotlinTypeInfo(
-                typeName = "FluentBuilder<*>",
+                typeName = innerType ?: "FluentBuilder<*>",
                 isNullable = true,
                 isAssetWrapper = true,
-                builderType = "FluentBuilder<*>",
+                builderType = innerType ?: "FluentBuilder<*>",
                 description = node.description,
             )
         }
@@ -148,6 +157,38 @@ object TypeMapper {
             isNullable = true,
             description = node.description,
         )
+    }
+
+    /**
+     * Extracts the inner type name from an AssetWrapper generic argument.
+     * E.g., AssetWrapper<TextAsset> → "TextBuilder"
+     * Returns null if no generic arguments or unable to extract.
+     */
+    private fun extractAssetWrapperInnerType(node: RefType, context: TypeMapperContext): String? {
+        val genericArgs = node.genericArguments ?: return null
+        if (genericArgs.isEmpty()) return null
+
+        val firstArg = genericArgs[0]
+
+        // Handle intersection generic: AssetWrapper<A & B> → use first concrete type
+        if (firstArg is AndType) {
+            val concreteTypes = firstArg.andTypes.filterIsInstance<RefType>()
+            if (concreteTypes.isNotEmpty()) {
+                val innerRef = concreteTypes[0].ref.substringBefore("<")
+                return toBuilderClassName(innerRef.removeSuffix("Asset"))
+            }
+            return null
+        }
+
+        // Handle RefType generic argument
+        if (firstArg is RefType) {
+            val innerRef = firstArg.ref.substringBefore("<")
+            // Skip if it's a generic token that can't be resolved
+            if (innerRef in context.genericTokens) return null
+            return toBuilderClassName(innerRef.removeSuffix("Asset"))
+        }
+
+        return null
     }
 
     private fun mapObjectType(node: ObjectType): KotlinTypeInfo {
@@ -202,12 +243,18 @@ object TypeMapper {
         }
 
         // If all non-null types are StringType with const values, it's a literal string union
-        // e.g., "foo" | "bar" | "baz" → String
+        // e.g., "foo" | "bar" | "baz" → String with KDoc listing valid values
         if (nonNullTypes.all { it is StringType && (it as StringType).const != null }) {
+            val validValues = nonNullTypes.map { (it as StringType).const!! }
+            val desc =
+                buildString {
+                    node.description?.let { append(it).append(". ") }
+                    append("Valid values: ${validValues.joinToString(", ") { "\"$it\"" }}")
+                }
             return KotlinTypeInfo(
                 typeName = "String",
                 isNullable = hasNullBranch,
-                description = node.description,
+                description = desc,
             )
         }
 
@@ -218,13 +265,85 @@ object TypeMapper {
             if (distinctTypes.size == 1) {
                 return mapped[0].copy(isNullable = hasNullBranch || mapped[0].isNullable)
             }
+
+            // Check if there's a common supertype among distinct concrete types
+            val hasAssetWrapper = mapped.any { it.isAssetWrapper }
+            val hasBuilder = mapped.any { it.builderType != null }
+            if (hasAssetWrapper || hasBuilder) {
+                return KotlinTypeInfo(
+                    typeName = "FluentBuilder<*>",
+                    isNullable = hasNullBranch,
+                    isAssetWrapper = hasAssetWrapper,
+                    builderType = "FluentBuilder<*>",
+                    description = node.description,
+                )
+            }
         }
 
-        // Heterogeneous union, fall back to Any
+        // Heterogeneous union, fall back to Any with documenting description
+        val unionDesc =
+            if (nonNullTypes.size > 1) {
+                val typeNames = nonNullTypes.map { mapToKotlinType(it, context).typeName }
+                buildString {
+                    node.description?.let { append(it).append(". ") }
+                    append("Union of: ${typeNames.joinToString(" | ")}")
+                }
+            } else {
+                node.description
+            }
+
         return KotlinTypeInfo(
             typeName = "Any?",
             isNullable = true,
-            description = node.description,
+            description = unionDesc,
+        )
+    }
+
+    /**
+     * Maps an AndType (intersection) to Kotlin type info.
+     * For object type intersections, merges properties.
+     * For other cases, falls back to Any? with documenting comment.
+     */
+    private fun mapAndType(
+        node: AndType,
+        context: TypeMapperContext,
+    ): KotlinTypeInfo {
+        val types = node.andTypes
+
+        // If all parts are object types, merge them into a single nested object type
+        if (types.all { it is ObjectType }) {
+            val mergedProperties = mutableMapOf<String, com.intuit.playerui.xlr.ObjectProperty>()
+            for (part in types) {
+                (part as ObjectType).properties.forEach { (k, v) ->
+                    mergedProperties[k] = v
+                }
+            }
+            return KotlinTypeInfo(
+                typeName = "Map<String, Any?>",
+                isNullable = true,
+                isNestedObject = true,
+                description = node.description,
+            )
+        }
+
+        // If exactly one non-null concrete type exists, use that
+        val nonNullTypes = types.filter { it !is NullType && it !is UndefinedType }
+        if (nonNullTypes.size == 1) {
+            return mapToKotlinType(nonNullTypes[0], context)
+        }
+
+        // Fall back to Any? with documenting description
+        val typeNames = types.map { mapToKotlinType(it, context).typeName }
+        val desc =
+            buildString {
+                node.description?.let { append(it).append(". ") }
+                append("Intersection of: ${typeNames.joinToString(" & ")}")
+            }
+
+        return KotlinTypeInfo(
+            typeName = "Any?",
+            isNullable = true,
+            description = desc,
         )
     }
 

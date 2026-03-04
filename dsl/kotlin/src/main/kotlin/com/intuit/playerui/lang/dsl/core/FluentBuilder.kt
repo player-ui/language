@@ -1,6 +1,8 @@
 package com.intuit.playerui.lang.dsl.core
 
 import com.intuit.playerui.lang.dsl.FluentDslMarker
+import com.intuit.playerui.lang.dsl.tagged.Binding
+import com.intuit.playerui.lang.dsl.tagged.Expression
 
 /**
  * Base interface for all fluent builders.
@@ -56,6 +58,37 @@ abstract class FluentBuilderBase<T : Any> : FluentBuilder<T> {
      * builder values in { asset: ... } structure.
      */
     protected open val assetWrapperProperties: Set<String> = emptySet()
+
+    /**
+     * Paths to AssetWrapper properties nested within intermediate objects.
+     * Each path is a list of property names (e.g., ["header", "left"]).
+     * Paths with length >= 2 are resolved by the nested AssetWrapper step.
+     */
+    protected open val assetWrapperPaths: List<List<String>> = emptyList()
+
+    /**
+     * Conditionally show/hide this asset based on an expression or binding.
+     * When set, the asset will only be rendered when the expression evaluates to true.
+     */
+    var applicability: Any?
+        get() = storage.peek("applicability")
+        set(value) {
+            storage["applicability"] = value
+        }
+
+    /**
+     * Sets applicability using a boolean expression.
+     */
+    fun applicability(expr: Expression<Boolean>) {
+        storage["applicability"] = expr
+    }
+
+    /**
+     * Sets applicability using a boolean binding.
+     */
+    fun applicability(binding: Binding<Boolean>) {
+        storage["applicability"] = binding
+    }
 
     /**
      * Sets a property value.
@@ -194,5 +227,6 @@ abstract class FluentBuilderBase<T : Any> : FluentBuilder<T> {
             context = context,
             arrayProperties = arrayProperties,
             assetWrapperProperties = assetWrapperProperties,
+            assetWrapperPaths = assetWrapperPaths,
         )
 }

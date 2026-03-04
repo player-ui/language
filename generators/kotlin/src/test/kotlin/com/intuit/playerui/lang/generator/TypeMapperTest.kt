@@ -1,11 +1,13 @@
 package com.intuit.playerui.lang.generator
 
+import com.intuit.playerui.xlr.AndType
 import com.intuit.playerui.xlr.AnyType
 import com.intuit.playerui.xlr.ArrayType
 import com.intuit.playerui.xlr.BooleanType
 import com.intuit.playerui.xlr.NeverType
 import com.intuit.playerui.xlr.NullType
 import com.intuit.playerui.xlr.NumberType
+import com.intuit.playerui.xlr.ObjectProperty
 import com.intuit.playerui.xlr.ObjectType
 import com.intuit.playerui.xlr.OrType
 import com.intuit.playerui.xlr.ParamTypeNode
@@ -248,6 +250,128 @@ class TypeMapperTest :
                         )
                     result.typeName shouldBe "String"
                     result.isNullable.shouldBeTrue()
+                }
+            }
+
+            describe("AndType mapping") {
+                it("maps intersection of object types to Map with isNestedObject") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            AndType(
+                                andTypes =
+                                    listOf(
+                                        ObjectType(
+                                            properties =
+                                                mapOf(
+                                                    "name" to ObjectProperty(required = true, node = StringType()),
+                                                ),
+                                        ),
+                                        ObjectType(
+                                            properties =
+                                                mapOf(
+                                                    "age" to ObjectProperty(required = true, node = NumberType()),
+                                                ),
+                                        ),
+                                    ),
+                            ),
+                        )
+                    result.typeName shouldBe "Map<String, Any?>"
+                    result.isNestedObject shouldBe true
+                }
+
+                it("maps single non-null intersection to its type") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            AndType(andTypes = listOf(StringType(), NullType())),
+                        )
+                    result.typeName shouldBe "String"
+                }
+
+                it("maps mixed intersection to Any? with description") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            AndType(andTypes = listOf(StringType(), NumberType())),
+                        )
+                    result.typeName shouldBe "Any?"
+                    result.description?.contains("Intersection") shouldBe true
+                }
+            }
+
+            describe("literal string union KDoc") {
+                it("includes valid values in description") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            OrType(
+                                orTypes =
+                                    listOf(
+                                        StringType(const = "primary"),
+                                        StringType(const = "secondary"),
+                                    ),
+                            ),
+                        )
+                    result.typeName shouldBe "String"
+                    result.description?.contains("\"primary\"") shouldBe true
+                    result.description?.contains("\"secondary\"") shouldBe true
+                }
+            }
+
+            describe("AssetWrapper generic extraction") {
+                it("extracts inner type from AssetWrapper<TextAsset>") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            RefType(
+                                ref = "AssetWrapper",
+                                genericArguments = listOf(RefType(ref = "TextAsset")),
+                            ),
+                        )
+                    result.isAssetWrapper shouldBe true
+                    result.builderType shouldBe "TextBuilder"
+                }
+
+                it("extracts inner type from AssetWrapper<ActionAsset>") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            RefType(
+                                ref = "AssetWrapper",
+                                genericArguments = listOf(RefType(ref = "ActionAsset")),
+                            ),
+                        )
+                    result.isAssetWrapper shouldBe true
+                    result.builderType shouldBe "ActionBuilder"
+                }
+
+                it("falls back to FluentBuilder<*> for AssetWrapper without generics") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            RefType(ref = "AssetWrapper"),
+                        )
+                    result.isAssetWrapper shouldBe true
+                    result.builderType shouldBe "FluentBuilder<*>"
+                }
+
+                it("handles unresolvable generic token as Any?") {
+                    val context =
+                        TypeMapperContext(
+                            genericTokens = mapOf("T" to ParamTypeNode(symbol = "T")),
+                        )
+                    val result = TypeMapper.mapToKotlinType(RefType(ref = "T"), context)
+                    result.typeName shouldBe "Any?"
+                }
+            }
+
+            describe("union with builder types") {
+                it("collapses union of AssetWrapper types to FluentBuilder") {
+                    val result =
+                        TypeMapper.mapToKotlinType(
+                            OrType(
+                                orTypes =
+                                    listOf(
+                                        RefType(ref = "AssetWrapper<TextAsset>"),
+                                        RefType(ref = "Asset"),
+                                    ),
+                            ),
+                        )
+                    result.builderType shouldBe "FluentBuilder<*>"
                 }
             }
 

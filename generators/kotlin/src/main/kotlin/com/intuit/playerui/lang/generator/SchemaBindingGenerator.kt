@@ -212,10 +212,10 @@ class SchemaBindingGenerator(
 
     private fun schemaTypeToKotlinType(typeName: String): ClassName =
         when (typeName) {
-            "StringType" -> ClassGenerator.STRING
-            "NumberType" -> ClassGenerator.NUMBER
-            "BooleanType" -> ClassGenerator.BOOLEAN
-            else -> ClassGenerator.STRING
+            "StringType" -> PoetTypes.STRING
+            "NumberType" -> PoetTypes.NUMBER
+            "BooleanType" -> PoetTypes.BOOLEAN
+            else -> PoetTypes.STRING
         }
 
     private fun parseSchema(json: String): Map<String, Map<String, SchemaField>> {

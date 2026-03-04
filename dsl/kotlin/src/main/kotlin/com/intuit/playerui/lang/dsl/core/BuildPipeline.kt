@@ -6,7 +6,7 @@ import com.intuit.playerui.lang.dsl.id.peekId
 import com.intuit.playerui.lang.dsl.tagged.TaggedValue
 
 /**
- * The 8-step build pipeline for resolving builder properties into final JSON.
+ * The 9-step build pipeline for resolving builder properties into final JSON.
  * Matches the TypeScript implementation's resolution order.
  */
 object BuildPipeline {
@@ -20,8 +20,9 @@ object BuildPipeline {
      * 4. Resolve AssetWrapper values
      * 5. Resolve mixed arrays (static + builder values)
      * 6. Resolve builders
-     * 7. Resolve switches
-     * 8. Resolve templates
+     * 7. Resolve nested AssetWrapper paths
+     * 8. Resolve switches
+     * 9. Resolve templates
      */
     fun execute(
         storage: ValueStorage,
@@ -30,6 +31,7 @@ object BuildPipeline {
         context: BuildContext?,
         arrayProperties: Set<String>,
         assetWrapperProperties: Set<String>,
+        assetWrapperPaths: List<List<String>> = emptyList(),
     ): Map<String, Any?> {
         val result = mutableMapOf<String, Any?>()
 
@@ -53,10 +55,13 @@ object BuildPipeline {
         // Step 5 & 6: Resolve arrays with builders and direct builders
         resolveBuilderEntries(allEntries, result, nestedContext, assetWrapperProperties)
 
-        // Step 7: Resolve switches
+        // Step 7: Resolve nested AssetWrapper paths
+        resolveNestedAssetWrappers(result, nestedContext, assetWrapperPaths)
+
+        // Step 8: Resolve switches
         resolveSwitches(auxiliary, result, nestedContext, arrayProperties)
 
-        // Step 8: Resolve templates
+        // Step 9: Resolve templates
         resolveTemplates(auxiliary, result, context)
 
         return result
@@ -92,8 +97,8 @@ object BuildPipeline {
         result: MutableMap<String, Any?>,
         context: BuildContext?,
     ) {
-        // If ID is already set explicitly, use it
-        if (result["id"] != null) return
+        // If ID is already set explicitly (non-empty), use it
+        if ((result["id"] as? String)?.isNotEmpty() == true) return
         if (context == null) return
 
         val type = result["type"] as? String
@@ -151,7 +156,7 @@ object BuildPipeline {
     ) {
         entries.forEach { (key, stored) ->
             if (key in assetWrapperProperties && stored is StoredValue.WrappedBuilder) {
-                val slotContext = createSlotContext(context, key, stored.builder)
+                val slotContext = createSlotContext(context, key)
                 val builtAsset = stored.builder.build(slotContext)
                 result[key] = mapOf("asset" to builtAsset)
             }
@@ -173,18 +178,19 @@ object BuildPipeline {
 
             when (stored) {
                 is StoredValue.Builder -> {
-                    val slotContext = createSlotContext(context, key, stored.builder)
+                    val slotContext = createSlotContext(context, key)
                     result[key] = stored.builder.build(slotContext)
                 }
 
                 is StoredValue.WrappedBuilder -> {
                     // Non-asset-wrapper WrappedBuilder: build it directly
-                    val slotContext = createSlotContext(context, key, stored.builder)
+                    val slotContext = createSlotContext(context, key)
                     result[key] = stored.builder.build(slotContext)
                 }
 
                 is StoredValue.ArrayValue -> {
-                    result[key] = resolveArrayValue(stored.items, context, key)
+                    val isAssetWrapperArray = key in assetWrapperProperties
+                    result[key] = resolveArrayValue(stored.items, context, key, isAssetWrapperArray)
                 }
 
                 is StoredValue.ObjectValue -> {
@@ -199,11 +205,13 @@ object BuildPipeline {
 
     /**
      * Resolves an array of StoredValues.
+     * When [wrapInAssetWrapper] is true, each builder element is wrapped in { asset: ... } format.
      */
     private fun resolveArrayValue(
         items: List<StoredValue>,
         context: BuildContext?,
         key: String,
+        wrapInAssetWrapper: Boolean = false,
     ): List<Any?> =
         items.mapIndexedNotNull { index, stored ->
             when (stored) {
@@ -216,17 +224,19 @@ object BuildPipeline {
                 }
 
                 is StoredValue.Builder -> {
-                    val arrayContext = createArrayItemContext(context, key, index, stored.builder)
-                    stored.builder.build(arrayContext)
+                    val arrayContext = createArrayItemContext(context, key, index)
+                    val built = stored.builder.build(arrayContext)
+                    if (wrapInAssetWrapper) mapOf("asset" to built) else built
                 }
 
                 is StoredValue.WrappedBuilder -> {
-                    val arrayContext = createArrayItemContext(context, key, index, stored.builder)
-                    stored.builder.build(arrayContext)
+                    val arrayContext = createArrayItemContext(context, key, index)
+                    val built = stored.builder.build(arrayContext)
+                    mapOf("asset" to built)
                 }
 
                 is StoredValue.ArrayValue -> {
-                    resolveArrayValue(stored.items, context, key)
+                    resolveArrayValue(stored.items, context, key, wrapInAssetWrapper)
                 }
 
                 is StoredValue.ObjectValue -> {
@@ -254,12 +264,12 @@ object BuildPipeline {
                 }
 
                 is StoredValue.Builder -> {
-                    val slotContext = createSlotContext(context, key, stored.builder)
+                    val slotContext = createSlotContext(context, key)
                     stored.builder.build(slotContext)
                 }
 
                 is StoredValue.WrappedBuilder -> {
-                    val slotContext = createSlotContext(context, key, stored.builder)
+                    val slotContext = createSlotContext(context, key)
                     stored.builder.build(slotContext)
                 }
 
@@ -274,8 +284,112 @@ object BuildPipeline {
         }
 
     /**
-     * Step 7: Resolve switch configurations.
+     * Step 7: Resolve nested AssetWrapper paths.
+     * Handles AssetWrapper properties nested within intermediate objects.
      */
+    private fun resolveNestedAssetWrappers(
+        result: MutableMap<String, Any?>,
+        context: BuildContext?,
+        assetWrapperPaths: List<List<String>>,
+    ) {
+        if (assetWrapperPaths.isEmpty()) return
+
+        for (path in assetWrapperPaths) {
+            if (path.size < 2) continue
+            resolveNestedPath(result, path, context)
+        }
+    }
+
+    /**
+     * Resolves a specific nested path, wrapping the target value in AssetWrapper format.
+     */
+    private fun resolveNestedPath(
+        result: MutableMap<String, Any?>,
+        path: List<String>,
+        context: BuildContext?,
+    ) {
+        // Navigate to the parent object containing the AssetWrapper property
+        var current: Any? = result
+
+        for (i in 0 until path.size - 1) {
+            val key = path[i]
+            if (current !is Map<*, *>) return
+
+            @Suppress("UNCHECKED_CAST")
+            var next: Any? = (current as Map<String, Any?>)[key] ?: return
+
+            // If intermediate value is a builder, resolve it first
+            if (next is FluentBuilder<*>) {
+                val slotContext = createSlotContext(context, key)
+                next = next.build(slotContext)
+                @Suppress("UNCHECKED_CAST")
+                (current as MutableMap<String, Any?>)[key] = next
+            }
+
+            current = next
+        }
+
+        // Now `current` is the parent object, wrap the final property
+        val finalKey = path.last()
+        if (current !is MutableMap<*, *>) return
+
+        @Suppress("UNCHECKED_CAST")
+        val parent = current as MutableMap<String, Any?>
+        val value = parent[finalKey] ?: return
+
+        // If it's already wrapped in { asset: ... }, skip
+        if (value is Map<*, *> && value.containsKey("asset")) return
+
+        val slotName = path.joinToString("-")
+
+        // Handle arrays of values that need wrapping
+        if (value is List<*>) {
+            parent[finalKey] =
+                value
+                    .filterNotNull()
+                    .mapIndexed { index, item ->
+                        if (item is Map<*, *> && item.containsKey("asset")) {
+                            item
+                        } else {
+                            wrapAssetValue(item, context, "$slotName-$index")
+                        }
+                    }
+            return
+        }
+
+        // Handle single value that needs wrapping
+        if (value is FluentBuilder<*> || value is Map<*, *>) {
+            parent[finalKey] = wrapAssetValue(value, context, slotName)
+        }
+    }
+
+    /**
+     * Wraps a value in AssetWrapper format: { asset: { id: ..., ...value } }
+     */
+    private fun wrapAssetValue(
+        value: Any?,
+        context: BuildContext?,
+        slotName: String,
+    ): Map<String, Any?> {
+        val resolved =
+            when (value) {
+                is FluentBuilder<*> -> {
+                    val slotContext = context?.withBranch(IdBranch.Slot(slotName))
+                    value.build(slotContext)
+                }
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    value as Map<String, Any?>
+                }
+                else -> return mapOf("asset" to value)
+            }
+        return mapOf("asset" to resolved)
+    }
+
+    /**
+     * Step 8: Resolve switch configurations.
+     */
+    @Suppress("NestedBlockDepth")
     private fun resolveSwitches(
         auxiliary: AuxiliaryStorage,
         result: MutableMap<String, Any?>,
@@ -335,7 +449,7 @@ object BuildPipeline {
     }
 
     /**
-     * Step 8: Resolve template configurations.
+     * Step 9: Resolve template configurations.
      */
     private fun resolveTemplates(
         auxiliary: AuxiliaryStorage,
@@ -392,7 +506,6 @@ object BuildPipeline {
     private fun createSlotContext(
         context: BuildContext?,
         key: String,
-        builder: FluentBuilder<*>,
     ): BuildContext? {
         if (context == null) return null
 
@@ -408,7 +521,6 @@ object BuildPipeline {
         context: BuildContext?,
         key: String,
         index: Int,
-        builder: FluentBuilder<*>,
     ): BuildContext? {
         if (context == null) return null
 
@@ -420,30 +532,6 @@ object BuildPipeline {
             .withBranch(IdBranch.ArrayItem(index))
             .withParameterName(key)
             .withIndex(index)
-    }
-
-    /**
-     * Extracts asset metadata from a builder for smart ID naming.
-     */
-    private fun extractAssetMetadata(builder: FluentBuilder<*>): AssetMetadata {
-        val type = builder.peek("type") as? String
-        val binding =
-            builder.peek("binding")?.let {
-                when (it) {
-                    is TaggedValue<*> -> it.toString()
-                    is String -> it
-                    else -> null
-                }
-            }
-        val value =
-            builder.peek("value")?.let {
-                when (it) {
-                    is TaggedValue<*> -> it.toString()
-                    is String -> it
-                    else -> null
-                }
-            }
-        return AssetMetadata(type, binding, value)
     }
 
     /**
