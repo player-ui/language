@@ -60,15 +60,6 @@ export function createConfig() {
           fs.copyFileSync("dist/index.mjs", "dist/index.legacy-esm.js");
         },
       },
-      // Browser-ready ESM, production + minified
-      {
-        ...defaultOptions,
-        define: {
-          "process.env.NODE_ENV": JSON.stringify("production"),
-        },
-        format: ["esm"],
-        outExtension: () => ({ js: ".mjs" }),
-      },
       {
         ...defaultOptions,
         format: "cjs",
