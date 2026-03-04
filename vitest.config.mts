@@ -4,6 +4,11 @@ import { UserConfig } from "vitest";
 
 export default defineConfig({
   test: {
+    server: {
+      deps: {
+        inline: [/@player-lang\//],
+      },
+    },
     environment: "happy-dom",
     exclude: [
       ...configDefaults.exclude,
