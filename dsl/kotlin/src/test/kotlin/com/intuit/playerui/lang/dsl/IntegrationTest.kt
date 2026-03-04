@@ -299,21 +299,21 @@ class IntegrationTest :
                     }.build(ctx)
 
                 // Outer collection gets ID from array index branch
-                result["id"] shouldBe "my-flow-views-0"
+                result["id"] shouldBe "my-flow-views-0-collection"
 
                 val outerValues = result["values"] as List<Map<String, Any?>>
 
                 // Inner collections get sequential IDs based on their array index
-                outerValues[0]["id"] shouldBe "my-flow-views-0-0"
-                outerValues[1]["id"] shouldBe "my-flow-views-0-1"
+                outerValues[0]["id"] shouldBe "my-flow-views-0-collection-values-0-collection"
+                outerValues[1]["id"] shouldBe "my-flow-views-0-collection-values-1-collection"
 
                 // Deep nested texts
                 val inner1Values = outerValues[0]["values"] as List<Map<String, Any?>>
-                inner1Values[0]["id"] shouldBe "my-flow-views-0-0-0"
-                inner1Values[1]["id"] shouldBe "my-flow-views-0-0-1"
+                inner1Values[0]["id"] shouldBe "my-flow-views-0-collection-values-0-collection-values-0-text"
+                inner1Values[1]["id"] shouldBe "my-flow-views-0-collection-values-0-collection-values-1-text"
 
                 val inner2Values = outerValues[1]["values"] as List<Map<String, Any?>>
-                inner2Values[0]["id"] shouldBe "my-flow-views-0-1-0"
+                inner2Values[0]["id"] shouldBe "my-flow-views-0-collection-values-1-collection-values-0-text"
             }
         }
 

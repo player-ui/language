@@ -77,13 +77,13 @@ class FlowTest :
                 views.size shouldBe 1
 
                 val firstView = views[0]
-                firstView["id"] shouldBe "registration-views-0"
+                firstView["id"] shouldBe "registration-views-0-collection"
                 firstView["type"] shouldBe "collection"
 
                 val values = firstView["values"] as List<Map<String, Any?>>
                 values.size shouldBe 2
-                values[0]["id"] shouldBe "registration-views-0-0"
-                values[1]["id"] shouldBe "registration-views-0-1"
+                values[0]["id"] shouldBe "registration-views-0-collection-values-0-input-firstName"
+                values[1]["id"] shouldBe "registration-views-0-collection-values-1-input-lastName"
             }
 
             it("includes data when provided") {
@@ -207,7 +207,7 @@ class FlowTest :
 
                 // Verify the collection structure
                 formView["type"] shouldBe "collection"
-                formView["id"] shouldBe "complex-flow-views-0"
+                formView["id"] shouldBe "complex-flow-views-0-collection"
 
                 // Verify nested label is wrapped
                 val label = formView["label"] as Map<String, Any?>

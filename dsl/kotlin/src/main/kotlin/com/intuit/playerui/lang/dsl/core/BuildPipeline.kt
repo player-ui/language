@@ -2,6 +2,7 @@ package com.intuit.playerui.lang.dsl.core
 
 import com.intuit.playerui.lang.dsl.id.determineSlotName
 import com.intuit.playerui.lang.dsl.id.genId
+import com.intuit.playerui.lang.dsl.id.peekId
 import com.intuit.playerui.lang.dsl.tagged.TaggedValue
 
 /**
@@ -95,8 +96,29 @@ object BuildPipeline {
         if (result["id"] != null) return
         if (context == null) return
 
-        // Generate ID from context
-        val generatedId = genId(context)
+        val type = result["type"] as? String
+        val binding = result["binding"] as? String
+        val value = result["value"] as? String
+        val assetMetadata = if (type != null) AssetMetadata(type, binding, value) else null
+        val parameterName = type ?: "asset"
+        val slotName = determineSlotName(parameterName, assetMetadata)
+
+        val generatedId =
+            when {
+                // Has branch (e.g., ArrayItem or Slot from parent context):
+                // First resolve the branch, then append the asset type
+                context.branch != null -> {
+                    val baseId = genId(context)
+                    genId(context.copy(parentId = baseId, branch = IdBranch.Slot(slotName)))
+                }
+                // Has parentId but no branch: append type as a Slot
+                context.parentId.isNotEmpty() -> {
+                    genId(context.copy(branch = IdBranch.Slot(slotName)))
+                }
+                // Fallback
+                else -> slotName
+            }
+
         if (generatedId.isNotEmpty()) {
             result["id"] = generatedId
         }
@@ -374,13 +396,9 @@ object BuildPipeline {
     ): BuildContext? {
         if (context == null) return null
 
-        val metadata = extractAssetMetadata(builder)
-        val slotName = determineSlotName(key, metadata)
-
         return context
-            .withBranch(IdBranch.Slot(slotName))
+            .withBranch(IdBranch.Slot(key))
             .withParameterName(key)
-            .withAssetMetadata(metadata)
     }
 
     /**
@@ -394,13 +412,14 @@ object BuildPipeline {
     ): BuildContext? {
         if (context == null) return null
 
-        val metadata = extractAssetMetadata(builder)
+        // Use peekId (not genId) to avoid registering intermediate ID for each array item
+        val intermediateId = peekId(context.withBranch(IdBranch.Slot(key)))
 
         return context
+            .withParentId(intermediateId)
             .withBranch(IdBranch.ArrayItem(index))
             .withParameterName(key)
             .withIndex(index)
-            .withAssetMetadata(metadata)
     }
 
     /**

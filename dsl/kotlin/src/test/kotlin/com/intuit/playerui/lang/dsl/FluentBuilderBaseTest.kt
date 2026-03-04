@@ -63,7 +63,7 @@ class FluentBuilderBaseTest :
                         value = "Label Text"
                     }.build(ctx)
 
-                result["id"] shouldBe "parent-label"
+                result["id"] shouldBe "parent-label-text"
             }
         }
 
