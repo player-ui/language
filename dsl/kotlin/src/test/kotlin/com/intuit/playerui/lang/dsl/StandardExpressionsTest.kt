@@ -1,8 +1,10 @@
 package com.intuit.playerui.lang.dsl
 
 import com.intuit.playerui.lang.dsl.tagged.*
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 class StandardExpressionsTest :
     DescribeSpec({
@@ -298,6 +300,156 @@ class StandardExpressionsTest :
 
                 conditional(isPassing, "Pass", "Fail")
                     .toString() shouldBe "@[score >= 70 ? \"Pass\" : \"Fail\"]@"
+            }
+        }
+
+        describe("Expression validation") {
+            it("accepts balanced parentheses") {
+                expression<Boolean>("(a && b)").toString() shouldBe "@[(a && b)]@"
+                expression<Boolean>("((a || b) && c)").toString() shouldBe "@[((a || b) && c)]@"
+                expression<Boolean>("(a && (b || c))").toString() shouldBe "@[(a && (b || c))]@"
+            }
+
+            it("accepts expressions without parentheses") {
+                expression<Boolean>("a && b").toString() shouldBe "@[a && b]@"
+                expression<String>("user.name").toString() shouldBe "@[user.name]@"
+            }
+
+            it("rejects unbalanced opening parentheses") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Boolean>("(a && b")
+                    }
+                exception.message shouldContain "Expected )"
+            }
+
+            it("rejects multiple unbalanced opening parentheses") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Boolean>("((a && b")
+                    }
+                exception.message shouldContain "Expected )"
+            }
+
+            it("rejects unbalanced closing parentheses") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Boolean>("a && b)")
+                    }
+                exception.message shouldContain "Unexpected )"
+            }
+
+            it("rejects expression with only closing parenthesis") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Boolean>(")")
+                    }
+                exception.message shouldContain "Unexpected )"
+            }
+
+            it("rejects mixed unbalanced parentheses") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Boolean>("(a && b))")
+                    }
+                exception.message shouldContain "Unexpected )"
+            }
+
+            it("accepts complex nested balanced parentheses") {
+                expression<Boolean>("((a && b) || (c && d))").toString() shouldBe "@[((a && b) || (c && d))]@"
+                expression<Boolean>("(((a)))").toString() shouldBe "@[(((a)))]@"
+            }
+        }
+
+        describe("Expression validation - extended brackets") {
+            // Square brackets
+            it("accepts balanced square brackets") {
+                expression<Any>("array[0]").toString() shouldBe "@[array[0]]@"
+                expression<Any>("data[index[0]]").toString() shouldBe "@[data[index[0]]]@"
+            }
+
+            it("rejects unbalanced opening square brackets") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("array[0")
+                    }
+                exception.message shouldContain "Expected ]"
+                exception.message shouldContain "at character 5"
+            }
+
+            it("rejects unbalanced closing square brackets") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("array0]")
+                    }
+                exception.message shouldContain "Unexpected ]"
+            }
+
+            // Curly braces
+            it("accepts balanced curly braces") {
+                expression<Any>("{a: b}").toString() shouldBe "@[{a: b}]@"
+                expression<Any>("{a: {b: c}}").toString() shouldBe "@[{a: {b: c}}]@"
+            }
+
+            it("rejects unbalanced opening curly braces") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("{a: b")
+                    }
+                exception.message shouldContain "Expected }"
+            }
+
+            it("rejects unbalanced closing curly braces") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("a: b}")
+                    }
+                exception.message shouldContain "Unexpected }"
+            }
+
+            // Mismatched brackets
+            it("rejects mismatched opening parenthesis with closing square bracket") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("(a && b]")
+                    }
+                exception.message shouldContain "Mismatched brackets"
+                exception.message shouldContain "found ]"
+                exception.message shouldContain "expected )"
+            }
+
+            it("rejects mismatched opening square bracket with closing curly brace") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("[a, b}")
+                    }
+                exception.message shouldContain "Mismatched brackets"
+                exception.message shouldContain "found }"
+                exception.message shouldContain "expected ]"
+            }
+
+            it("rejects mismatched opening curly brace with closing parenthesis") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("{key: value)")
+                    }
+                exception.message shouldContain "Mismatched brackets"
+                exception.message shouldContain "found )"
+                exception.message shouldContain "expected }"
+            }
+
+            // Mixed bracket types
+            it("accepts complex nested mixed brackets") {
+                expression<Any>("func(array[index], {key: val})").toString() shouldBe
+                    "@[func(array[index], {key: val})]@"
+            }
+
+            it("rejects complex mismatched brackets") {
+                val exception =
+                    shouldThrow<IllegalArgumentException> {
+                        expression<Any>("func(array[index), {key: val})")
+                    }
+                exception.message shouldContain "Mismatched brackets"
             }
         }
 

@@ -3,6 +3,7 @@ package com.intuit.playerui.lang.generator
 import com.intuit.playerui.xlr.XlrDeserializer
 import com.intuit.playerui.xlr.XlrDocument
 import java.io.File
+import java.io.IOException
 
 /**
  * Configuration for the Kotlin DSL generator.
@@ -10,7 +11,13 @@ import java.io.File
 data class GeneratorConfig(
     val packageName: String,
     val outputDir: File,
-)
+) {
+    init {
+        require(packageName.matches(Regex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"))) {
+            "Invalid package name: $packageName. Package names must start with a lowercase letter and contain only lowercase letters, digits, underscores, and dots."
+        }
+    }
+}
 
 /**
  * Result of generating a single file.
@@ -48,6 +55,10 @@ class Generator(
      * Generate a Kotlin builder from a single XLR JSON file.
      */
     fun generateFromFile(file: File): GeneratorResult {
+        require(file.exists()) { "File not found: ${file.absolutePath}" }
+        require(file.isFile) { "Not a file: ${file.absolutePath}" }
+        require(file.canRead()) { "File not readable: ${file.absolutePath}" }
+
         val jsonContent = file.readText()
         return generateFromJson(jsonContent)
     }
@@ -76,7 +87,13 @@ class Generator(
 
         // Write the generated file
         val outputFile = File(outputPackageDir, "${generatedClass.className}.kt")
-        outputFile.writeText(generatedClass.code)
+        try {
+            outputFile.writeText(generatedClass.code)
+        } catch (e: IOException) {
+            throw IllegalStateException("I/O error writing to ${outputFile.absolutePath}: ${e.message}", e)
+        } catch (e: SecurityException) {
+            throw IllegalStateException("Permission denied writing to ${outputFile.absolutePath}", e)
+        }
 
         return GeneratorResult(
             className = generatedClass.className,

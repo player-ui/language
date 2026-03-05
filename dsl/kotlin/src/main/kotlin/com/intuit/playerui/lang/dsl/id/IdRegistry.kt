@@ -17,20 +17,27 @@ class IdRegistry {
      *
      * @param baseId The desired base ID
      * @return A unique ID (either baseId or baseId-N where N is a number)
+     * @throws IllegalStateException if unable to generate unique ID after max attempts
      */
     fun ensureUnique(baseId: String): String {
         if (registered.add(baseId)) {
             return baseId
         }
 
-        suffixCounters.putIfAbsent(baseId, 0)
-        while (true) {
-            val next = suffixCounters.merge(baseId, 1, Int::plus)!!
+        // Safeguard against infinite loops (should never be reached in practice)
+        val maxAttempts = 10000
+        repeat(maxAttempts) {
+            val next =
+                suffixCounters.compute(baseId) { _, current ->
+                    (current ?: 0) + 1
+                } ?: error("Unexpected null from compute operation")
             val candidate = "$baseId-$next"
             if (registered.add(candidate)) {
                 return candidate
             }
         }
+
+        error("Failed to generate unique ID for '$baseId' after $maxAttempts attempts")
     }
 
     /**

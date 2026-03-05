@@ -131,11 +131,11 @@ class SchemaBindingGenerator(
 
         // Handle arrays
         if (field.isArray == true) {
-            val arrayPath = if (path.isNotEmpty()) "$path._current_" else "_current_"
+            val arrayPath = if (path.isNotEmpty()) "$path.$ARRAY_CURRENT_SEGMENT" else ARRAY_CURRENT_SEGMENT
 
             if (typeName in PRIMITIVE_TYPES) {
                 // Primitive arrays: create nested object with name/value property
-                val propName = if (typeName == "StringType") "name" else "value"
+                val propName = if (typeName == "StringType") STRING_ARRAY_PROPERTY else PRIMITIVE_ARRAY_PROPERTY
                 val nestedObject =
                     TypeSpec
                         .objectBuilder(kotlinName)
@@ -155,6 +155,7 @@ class SchemaBindingGenerator(
                 return
             }
 
+            // Fallback for unknown array types
             builder.addProperty(buildBindingProperty(kotlinName, "StringType", arrayPath))
             return
         }
@@ -219,20 +220,55 @@ class SchemaBindingGenerator(
         }
 
     private fun parseSchema(json: String): Map<String, Map<String, SchemaField>> {
-        val jsonElement = Json.parseToJsonElement(json)
-        val jsonObject = jsonElement.jsonObject
+        val jsonElement =
+            try {
+                Json.parseToJsonElement(json)
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Invalid JSON schema: ${e.message}", e)
+            }
 
-        return jsonObject.mapValues { (_, nodeElement) ->
-            val nodeObject = nodeElement.jsonObject
-            nodeObject.mapValues { (_, fieldElement) ->
-                parseSchemaField(fieldElement)
+        val jsonObject =
+            jsonElement.jsonObject
+                ?: throw IllegalArgumentException(
+                    "Schema root must be a JSON object, got: ${jsonElement::class.simpleName}",
+                )
+
+        return jsonObject.mapValues { (nodeName, nodeElement) ->
+            val nodeObject =
+                nodeElement.jsonObject
+                    ?: throw IllegalArgumentException(
+                        "Schema node '$nodeName' must be a JSON object, " +
+                            "got: ${nodeElement::class.simpleName}",
+                    )
+            nodeObject.mapValues { (fieldName, fieldElement) ->
+                try {
+                    parseSchemaField(fieldElement)
+                } catch (e: IllegalArgumentException) {
+                    throw IllegalArgumentException(
+                        "Error parsing field '$nodeName.$fieldName': ${e.message}",
+                        e,
+                    )
+                } catch (e: Exception) {
+                    throw IllegalArgumentException(
+                        "Unexpected error parsing field '$nodeName.$fieldName': ${e.message}",
+                        e,
+                    )
+                }
             }
         }
     }
 
     private fun parseSchemaField(element: JsonElement): SchemaField {
-        val obj = element.jsonObject
-        val type = obj["type"]?.jsonPrimitive?.content ?: error("Schema field must have a 'type' property")
+        val obj =
+            element.jsonObject
+                ?: throw IllegalArgumentException(
+                    "Schema field must be a JSON object, got: ${element::class.simpleName}",
+                )
+
+        val type =
+            obj["type"]?.jsonPrimitive?.content
+                ?: throw IllegalArgumentException("Schema field must have a 'type' property")
+
         val isRecord = obj["isRecord"]?.jsonPrimitive?.booleanOrNull
         val isArray = obj["isArray"]?.jsonPrimitive?.booleanOrNull
 
@@ -242,6 +278,10 @@ class SchemaBindingGenerator(
     companion object {
         private val PRIMITIVE_TYPES = setOf("StringType", "NumberType", "BooleanType")
         private val BINDING = ClassName("com.intuit.playerui.lang.dsl.tagged", "Binding")
+
+        private const val ARRAY_CURRENT_SEGMENT = "_current_"
+        private const val STRING_ARRAY_PROPERTY = "name"
+        private const val PRIMITIVE_ARRAY_PROPERTY = "value"
 
         /**
          * Generate schema binding code from a JSON string.

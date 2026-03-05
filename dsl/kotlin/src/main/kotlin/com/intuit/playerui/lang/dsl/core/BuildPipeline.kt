@@ -11,6 +11,24 @@ import com.intuit.playerui.lang.dsl.tagged.TaggedValue
  */
 object BuildPipeline {
     /**
+     * Type-safe helper to cast Map to mutable string-keyed map.
+     *
+     * @receiver Any value that is known to be a Map<String, Any?>
+     * @return The value cast to MutableMap<String, Any?>
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun Any.asMutableStringMap(): MutableMap<String, Any?> = this as MutableMap<String, Any?>
+
+    /**
+     * Type-safe helper to cast Map to immutable string-keyed map.
+     *
+     * @receiver Any value that is known to be a Map<String, Any?>
+     * @return The value cast to Map<String, Any?>
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun Any.asStringMap(): Map<String, Any?> = this as Map<String, Any?>
+
+    /**
      * Executes the full build pipeline.
      *
      * Steps:
@@ -116,12 +134,16 @@ object BuildPipeline {
                     val baseId = genId(context)
                     genId(context.copy(parentId = baseId, branch = IdBranch.Slot(slotName)))
                 }
+
                 // Has parentId but no branch: append type as a Slot
                 context.parentId.isNotEmpty() -> {
                     genId(context.copy(branch = IdBranch.Slot(slotName)))
                 }
+
                 // Fallback
-                else -> slotName
+                else -> {
+                    slotName
+                }
             }
 
         if (generatedId.isNotEmpty()) {
@@ -315,15 +337,13 @@ object BuildPipeline {
             val key = path[i]
             if (current !is Map<*, *>) return
 
-            @Suppress("UNCHECKED_CAST")
-            var next: Any? = (current as Map<String, Any?>)[key] ?: return
+            var next: Any? = current.asStringMap()[key] ?: return
 
             // If intermediate value is a builder, resolve it first
             if (next is FluentBuilder<*>) {
                 val slotContext = createSlotContext(context, key)
                 next = next.build(slotContext)
-                @Suppress("UNCHECKED_CAST")
-                (current as MutableMap<String, Any?>)[key] = next
+                current.asMutableStringMap()[key] = next
             }
 
             current = next
@@ -333,8 +353,7 @@ object BuildPipeline {
         val finalKey = path.last()
         if (current !is MutableMap<*, *>) return
 
-        @Suppress("UNCHECKED_CAST")
-        val parent = current as MutableMap<String, Any?>
+        val parent = current.asMutableStringMap()
         val value = parent[finalKey] ?: return
 
         // If it's already wrapped in { asset: ... }, skip
@@ -377,11 +396,14 @@ object BuildPipeline {
                     val slotContext = context?.withBranch(IdBranch.Slot(slotName))
                     value.build(slotContext)
                 }
+
                 is Map<*, *> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    value as Map<String, Any?>
+                    value.asStringMap()
                 }
-                else -> return mapOf("asset" to value)
+
+                else -> {
+                    return mapOf("asset" to value)
+                }
             }
         return mapOf("asset" to resolved)
     }
@@ -551,15 +573,11 @@ object BuildPipeline {
             if (index == lastIndex) {
                 when {
                     current is MutableMap<*, *> && segment is String -> {
-                        @Suppress("UNCHECKED_CAST")
-                        val map = current as MutableMap<String, Any?>
+                        val map = current.asMutableStringMap()
                         val existing = map[segment]
                         if (existing is Map<*, *> && value is Map<*, *>) {
-                            @Suppress("UNCHECKED_CAST")
-                            val existingMap = existing as Map<String, Any?>
-
-                            @Suppress("UNCHECKED_CAST")
-                            val valueMap = value as Map<String, Any?>
+                            val existingMap = existing.asStringMap()
+                            val valueMap = value.asStringMap()
                             map[segment] = existingMap + valueMap
                         } else {
                             map[segment] = value
@@ -570,12 +588,11 @@ object BuildPipeline {
                 current =
                     when {
                         current is Map<*, *> && segment is String -> {
-                            @Suppress("UNCHECKED_CAST")
-                            (current as Map<String, Any?>)[segment]
+                            current.asStringMap()[segment]
                         }
 
                         current is List<*> && segment is Int -> {
-                            (current as List<*>).getOrNull(segment)
+                            current.getOrNull(segment)
                         }
 
                         // Intentional: when path segment type mismatches the container

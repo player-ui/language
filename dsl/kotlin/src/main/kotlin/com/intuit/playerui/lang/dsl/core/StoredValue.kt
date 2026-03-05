@@ -51,17 +51,36 @@ sealed interface StoredValue {
 }
 
 /**
- * Creates a deep copy of this StoredValue, ensuring mutable containers are not shared.
+ * Maximum recursion depth for deep copy to prevent stack overflow.
  */
-fun StoredValue.deepCopy(): StoredValue =
-    when (this) {
+private const val MAX_COPY_DEPTH = 100
+
+/**
+ * Creates a deep copy of this StoredValue, ensuring mutable containers are not shared.
+ * @throws IllegalStateException if maximum copy depth is exceeded
+ */
+fun StoredValue.deepCopy(): StoredValue = deepCopyImpl(0)
+
+/**
+ * Internal implementation of deep copy with depth tracking.
+ */
+private fun StoredValue.deepCopyImpl(depth: Int): StoredValue {
+    if (depth > MAX_COPY_DEPTH) {
+        error(
+            "Deep copy exceeded maximum depth of $MAX_COPY_DEPTH - " +
+                "possible circular reference or excessively deep structure",
+        )
+    }
+
+    return when (this) {
         is StoredValue.Primitive -> StoredValue.Primitive(value)
         is StoredValue.Tagged -> StoredValue.Tagged(value)
         is StoredValue.Builder -> StoredValue.Builder(builder)
         is StoredValue.WrappedBuilder -> StoredValue.WrappedBuilder(builder)
-        is StoredValue.ObjectValue -> StoredValue.ObjectValue(map.mapValues { (_, v) -> v.deepCopy() })
-        is StoredValue.ArrayValue -> StoredValue.ArrayValue(items.map { it.deepCopy() })
+        is StoredValue.ObjectValue -> StoredValue.ObjectValue(map.mapValues { (_, v) -> v.deepCopyImpl(depth + 1) })
+        is StoredValue.ArrayValue -> StoredValue.ArrayValue(items.map { it.deepCopyImpl(depth + 1) })
     }
+}
 
 /**
  * Converts a raw value to a StoredValue with proper type classification.
@@ -85,19 +104,36 @@ fun toStoredValue(value: Any?): StoredValue =
         }
 
         is Map<*, *> -> {
-            @Suppress("UNCHECKED_CAST")
-            val map = value as Map<String, Any?>
-            if (map.values.any { containsBuilder(it) }) {
-                StoredValue.ObjectValue(map.mapValues { (_, v) -> toStoredValue(v) })
-            } else {
+            try {
+                // Validate all keys are strings before casting
+                if (value.keys.all { it is String }) {
+                    // Safe: validated all keys are strings
+                    @Suppress("UNCHECKED_CAST")
+                    val map = value as Map<String, Any?>
+                    if (map.values.any { containsBuilder(it) }) {
+                        StoredValue.ObjectValue(map.mapValues { (_, v) -> toStoredValue(v) })
+                    } else {
+                        StoredValue.Primitive(value)
+                    }
+                } else {
+                    // Fallback: treat as primitive if keys aren't all strings
+                    StoredValue.Primitive(value)
+                }
+            } catch (e: Exception) {
+                // If any error occurs during map processing, treat as primitive
                 StoredValue.Primitive(value)
             }
         }
 
         is List<*> -> {
-            if (value.any { containsBuilder(it) }) {
-                StoredValue.ArrayValue(value.map { toStoredValue(it) })
-            } else {
+            try {
+                if (value.any { containsBuilder(it) }) {
+                    StoredValue.ArrayValue(value.map { toStoredValue(it) })
+                } else {
+                    StoredValue.Primitive(value)
+                }
+            } catch (e: Exception) {
+                // If any error occurs during list processing, treat as primitive
                 StoredValue.Primitive(value)
             }
         }

@@ -66,76 +66,82 @@ fun xor(left: Any, right: Any): Expression<Boolean> {
 }
 
 /**
- * Equality comparison (loose equality ==).
+ * Helper function to create binary comparison expressions.
+ * Reduces code duplication across all comparison operators.
  */
-fun <T> equal(left: Any, right: T): Expression<Boolean> {
+private fun createComparisonExpression(
+    left: Any,
+    right: Any?,
+    operator: String,
+): Expression<Boolean> {
     val leftExpr = toExpressionString(left)
     val rightExpr = toValueString(right)
-    return expression("$leftExpr == $rightExpr")
+    return expression("$leftExpr $operator $rightExpr")
 }
+
+/**
+ * Equality comparison (loose equality ==).
+ */
+fun <T> equal(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "==")
 
 /**
  * Strict equality comparison (===).
  */
-fun <T> strictEqual(left: Any, right: T): Expression<Boolean> {
-    val leftExpr = toExpressionString(left)
-    val rightExpr = toValueString(right)
-    return expression("$leftExpr === $rightExpr")
-}
+fun <T> strictEqual(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "===")
 
 /**
  * Inequality comparison (!=).
  */
-fun <T> notEqual(left: Any, right: T): Expression<Boolean> {
-    val leftExpr = toExpressionString(left)
-    val rightExpr = toValueString(right)
-    return expression("$leftExpr != $rightExpr")
-}
+fun <T> notEqual(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "!=")
 
 /**
  * Strict inequality comparison (!==).
  */
-fun <T> strictNotEqual(left: Any, right: T): Expression<Boolean> {
-    val leftExpr = toExpressionString(left)
-    val rightExpr = toValueString(right)
-    return expression("$leftExpr !== $rightExpr")
-}
+fun <T> strictNotEqual(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "!==")
 
 /**
  * Greater than comparison (>).
  */
-fun greaterThan(left: Any, right: Any): Expression<Boolean> {
-    val leftExpr = toExpressionString(left)
-    val rightExpr = toValueString(right)
-    return expression("$leftExpr > $rightExpr")
-}
+fun greaterThan(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, ">")
 
 /**
  * Greater than or equal comparison (>=).
  */
-fun greaterThanOrEqual(left: Any, right: Any): Expression<Boolean> {
-    val leftExpr = toExpressionString(left)
-    val rightExpr = toValueString(right)
-    return expression("$leftExpr >= $rightExpr")
-}
+fun greaterThanOrEqual(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, ">=")
 
 /**
  * Less than comparison (<).
  */
-fun lessThan(left: Any, right: Any): Expression<Boolean> {
-    val leftExpr = toExpressionString(left)
-    val rightExpr = toValueString(right)
-    return expression("$leftExpr < $rightExpr")
-}
+fun lessThan(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, "<")
 
 /**
  * Less than or equal comparison (<=).
  */
-fun lessThanOrEqual(left: Any, right: Any): Expression<Boolean> {
-    val leftExpr = toExpressionString(left)
-    val rightExpr = toValueString(right)
-    return expression("$leftExpr <= $rightExpr")
-}
+fun lessThanOrEqual(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, "<=")
 
 /**
  * Addition operation (+).

@@ -224,6 +224,11 @@ object TypeMapper {
         )
     }
 
+    /**
+     * Extension function to filter out null and undefined types from a list of NodeTypes.
+     */
+    private fun List<NodeType>.filterNullTypes() = filter { it !is NullType && it !is UndefinedType }
+
     private fun mapOrType(
         node: OrType,
         context: TypeMapperContext,
@@ -232,7 +237,7 @@ object TypeMapper {
 
         // Separate nullable types (null, undefined) from non-nullable types
         val nullableTypes = types.filter { it is NullType || it is UndefinedType }
-        val nonNullTypes = types.filter { it !is NullType && it !is UndefinedType }
+        val nonNullTypes = types.filterNullTypes()
         val hasNullBranch = nullableTypes.isNotEmpty()
 
         // If all non-null types are the same primitive, collapse to nullable primitive
@@ -245,7 +250,7 @@ object TypeMapper {
         // If all non-null types are StringType with const values, it's a literal string union
         // e.g., "foo" | "bar" | "baz" → String with KDoc listing valid values
         if (nonNullTypes.all { it is StringType && (it as StringType).const != null }) {
-            val validValues = nonNullTypes.map { (it as StringType).const!! }
+            val validValues = nonNullTypes.mapNotNull { (it as? StringType)?.const }
             val desc =
                 buildString {
                     node.description?.let { append(it).append(". ") }
@@ -327,7 +332,7 @@ object TypeMapper {
         }
 
         // If exactly one non-null concrete type exists, use that
-        val nonNullTypes = types.filter { it !is NullType && it !is UndefinedType }
+        val nonNullTypes = types.filterNullTypes()
         if (nonNullTypes.size == 1) {
             return mapToKotlinType(nonNullTypes[0], context)
         }

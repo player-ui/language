@@ -54,9 +54,21 @@ fun main(args: Array<String>) {
 }
 
 private fun generateSchemaBindings(parsedArgs: ParsedArgs) {
-    val schemaFile = parsedArgs.schemaFile!!
-    val packageName = parsedArgs.packageName!!
-    val outputDir = parsedArgs.outputDir!!
+    val schemaFile =
+        parsedArgs.schemaFile ?: run {
+            System.err.println("Error: Schema file is required")
+            exitProcess(1)
+        }
+    val packageName =
+        parsedArgs.packageName ?: run {
+            System.err.println("Error: Package name is required")
+            exitProcess(1)
+        }
+    val outputDir =
+        parsedArgs.outputDir ?: run {
+            System.err.println("Error: Output directory is required")
+            exitProcess(1)
+        }
 
     if (!schemaFile.isFile) {
         System.err.println("Error: Schema file not found: ${schemaFile.absolutePath}")
@@ -73,7 +85,7 @@ private fun generateSchemaBindings(parsedArgs: ParsedArgs) {
     println("  Schema: ${schemaFile.name}")
     println("  Object: $objectName")
 
-    try {
+    handleGenerationErrors(schemaFile.name) {
         val schemaJson = schemaFile.readText()
         val generator = SchemaBindingGenerator(packageName)
         val result = generator.generate(schemaJson, objectName)
@@ -89,20 +101,22 @@ private fun generateSchemaBindings(parsedArgs: ParsedArgs) {
         println("  Generated: ${result.className} -> ${outputFile.absolutePath}")
         println()
         println("Generation complete: 1 succeeded, 0 failed")
-    } catch (e: java.io.IOException) {
-        System.err.println("  Error processing ${schemaFile.name}: ${e.message}")
-        exitProcess(1)
-    } catch (e: IllegalArgumentException) {
-        System.err.println("  Error processing ${schemaFile.name}: ${e.message}")
-        exitProcess(1)
     }
 }
 
 private fun generateAssetBuilders(parsedArgs: ParsedArgs) {
     val config =
         GeneratorConfig(
-            packageName = parsedArgs.packageName!!,
-            outputDir = parsedArgs.outputDir!!,
+            packageName =
+                parsedArgs.packageName ?: run {
+                    System.err.println("Error: Package name is required")
+                    exitProcess(1)
+                },
+            outputDir =
+                parsedArgs.outputDir ?: run {
+                    System.err.println("Error: Output directory is required")
+                    exitProcess(1)
+                },
         )
 
     val generator = Generator(config)
@@ -122,15 +136,15 @@ private fun generateAssetBuilders(parsedArgs: ParsedArgs) {
     var errorCount = 0
 
     inputFiles.forEach { file ->
-        try {
-            val result = generator.generateFromFile(file)
-            println("  Generated: ${result.className} -> ${result.filePath.absolutePath}")
+        val success =
+            handleGenerationErrors(file.name) {
+                val result = generator.generateFromFile(file)
+                println("  Generated: ${result.className} -> ${result.filePath.absolutePath}")
+            }
+
+        if (success) {
             successCount++
-        } catch (e: java.io.IOException) {
-            System.err.println("  Error processing ${file.name}: ${e.message}")
-            errorCount++
-        } catch (e: IllegalArgumentException) {
-            System.err.println("  Error processing ${file.name}: ${e.message}")
+        } else {
             errorCount++
         }
     }
@@ -142,6 +156,25 @@ private fun generateAssetBuilders(parsedArgs: ParsedArgs) {
         exitProcess(1)
     }
 }
+
+/**
+ * Handles generation errors consistently across all generation modes.
+ * Returns true if the operation succeeded, false if an error occurred.
+ */
+private inline fun handleGenerationErrors(
+    fileName: String,
+    block: () -> Unit,
+): Boolean =
+    try {
+        block()
+        true
+    } catch (e: java.io.IOException) {
+        System.err.println("  Error processing $fileName: ${e.message}")
+        false
+    } catch (e: IllegalArgumentException) {
+        System.err.println("  Error processing $fileName: ${e.message}")
+        false
+    }
 
 private data class ParsedArgs(
     val inputPaths: List<File> = emptyList(),
@@ -169,37 +202,47 @@ private fun parseArgs(args: Array<String>): ParsedArgs {
 
             "--input", "-i" -> {
                 i++
-                if (i < args.size) {
-                    inputPaths.add(File(args[i]))
+                if (i >= args.size) {
+                    System.err.println("Error: --input requires a value")
+                    exitProcess(1)
                 }
+                inputPaths.add(File(args[i]))
             }
 
             "--output", "-o" -> {
                 i++
-                if (i < args.size) {
-                    outputDir = File(args[i])
+                if (i >= args.size) {
+                    System.err.println("Error: --output requires a value")
+                    exitProcess(1)
                 }
+                outputDir = File(args[i])
             }
 
             "--package", "-p" -> {
                 i++
-                if (i < args.size) {
-                    packageName = args[i]
+                if (i >= args.size) {
+                    System.err.println("Error: --package requires a value")
+                    exitProcess(1)
                 }
+                packageName = args[i]
             }
 
             "--schema", "-s" -> {
                 i++
-                if (i < args.size) {
-                    schemaFile = File(args[i])
+                if (i >= args.size) {
+                    System.err.println("Error: --schema requires a value")
+                    exitProcess(1)
                 }
+                schemaFile = File(args[i])
             }
 
             "--schema-name" -> {
                 i++
-                if (i < args.size) {
-                    schemaName = args[i]
+                if (i >= args.size) {
+                    System.err.println("Error: --schema-name requires a value")
+                    exitProcess(1)
                 }
+                schemaName = args[i]
             }
 
             else -> {
@@ -215,26 +258,18 @@ private fun parseArgs(args: Array<String>): ParsedArgs {
     return ParsedArgs(inputPaths, outputDir, packageName, schemaFile, schemaName, showHelp)
 }
 
-private fun collectInputFiles(paths: List<File>): List<File> {
-    val result = mutableListOf<File>()
-
-    paths.forEach { path ->
+private fun collectInputFiles(paths: List<File>): List<File> =
+    paths.flatMap { path ->
         when {
-            path.isDirectory -> {
+            path.isDirectory ->
                 path
                     .walkTopDown()
                     .filter { it.isFile && it.extension == "json" }
-                    .forEach { result.add(it) }
-            }
-
-            path.isFile && path.extension == "json" -> {
-                result.add(path)
-            }
+                    .toList()
+            path.isFile && path.extension == "json" -> listOf(path)
+            else -> emptyList()
         }
     }
-
-    return result
-}
 
 private fun printHelp() {
     println(

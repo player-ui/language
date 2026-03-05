@@ -32,6 +32,10 @@ sealed interface TaggedValue<T> {
 class Binding<T>(
     private val path: String,
 ) : TaggedValue<T> {
+    init {
+        require(path.isNotBlank()) { "Binding path cannot be empty or blank" }
+    }
+
     override fun toValue(): String = path
 
     override fun toString(): String = "{{$path}}"
@@ -96,25 +100,48 @@ class Expression<T>(
     override fun hashCode(): Int = expr.hashCode()
 
     private fun validateSyntax(expression: String) {
-        var openParens = 0
+        val stack = mutableListOf<Pair<Char, Int>>() // (opening bracket, position)
+
         expression.forEachIndexed { index, char ->
             when (char) {
-                '(' -> {
-                    openParens++
+                '(', '[', '{' -> {
+                    stack.add(char to index)
                 }
 
-                ')' -> {
-                    openParens--
-                    require(openParens >= 0) {
-                        "Unexpected ) at character $index in expression: $expression"
+                ')', ']', '}' -> {
+                    if (stack.isEmpty()) {
+                        throw IllegalArgumentException(
+                            "Unexpected $char at character $index in expression: $expression",
+                        )
+                    }
+                    val (opening, openPos) = stack.removeLast()
+                    val expected =
+                        when (char) {
+                            ')' -> '('
+                            ']' -> '['
+                            '}' -> '{'
+                            else -> throw IllegalStateException()
+                        }
+                    require(opening == expected) {
+                        "Mismatched brackets: found $char at character $index but expected ${getClosing(opening)} to match $opening at character $openPos in expression: $expression"
                     }
                 }
             }
         }
-        require(openParens <= 0) {
-            "Expected ) in expression: $expression"
+
+        require(stack.isEmpty()) {
+            val (bracket, pos) = stack.last()
+            "Expected ${getClosing(bracket)} to match $bracket at character $pos in expression: $expression"
         }
     }
+
+    private fun getClosing(opening: Char): Char =
+        when (opening) {
+            '(' -> ')'
+            '[' -> ']'
+            '{' -> '}'
+            else -> throw IllegalArgumentException("Not an opening bracket: $opening")
+        }
 }
 
 /**

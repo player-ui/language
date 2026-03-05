@@ -474,5 +474,53 @@ class IdGeneratorTest :
                 genId(ctx)
                 reg.isRegistered("check-status") shouldBe true
             }
+
+            it("handles high-contention ID generation correctly") {
+                val reg = IdRegistry()
+                val results = (1..1000).map { reg.ensureUnique("base") }
+
+                // All IDs should be unique
+                results.toSet().size shouldBe 1000
+
+                // First should be "base", rest should be "base-N"
+                results.first() shouldBe "base"
+                results.drop(1).all { it.matches(Regex("base-\\d+")) } shouldBe true
+            }
+
+            it("generates correct suffix sequence") {
+                val reg = IdRegistry()
+                reg.ensureUnique("test") shouldBe "test"
+                reg.ensureUnique("test") shouldBe "test-1"
+                reg.ensureUnique("test") shouldBe "test-2"
+                reg.ensureUnique("test") shouldBe "test-3"
+                reg.ensureUnique("test") shouldBe "test-4"
+                reg.ensureUnique("test") shouldBe "test-5"
+            }
+
+            it("handles multiple different base IDs concurrently") {
+                val reg = IdRegistry()
+
+                // Generate IDs for different bases
+                reg.ensureUnique("alpha") shouldBe "alpha"
+                reg.ensureUnique("beta") shouldBe "beta"
+                reg.ensureUnique("alpha") shouldBe "alpha-1"
+                reg.ensureUnique("gamma") shouldBe "gamma"
+                reg.ensureUnique("beta") shouldBe "beta-1"
+                reg.ensureUnique("alpha") shouldBe "alpha-2"
+
+                // Verify size
+                reg.size() shouldBe 6
+            }
+
+            it("handles collisions when suffix already exists") {
+                val reg = IdRegistry()
+
+                // Manually register both base and first suffix
+                reg.ensureUnique("item")
+                reg.ensureUnique("item-1")
+
+                // Next collision should be "item-2"
+                reg.ensureUnique("item") shouldBe "item-2"
+            }
         }
     })

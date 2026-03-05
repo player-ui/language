@@ -52,7 +52,7 @@ class CodeWriter {
      * Add a block of code with automatic indentation.
      * Opens with the given line, increases indent, runs the block, decreases indent, closes with closing line.
      */
-    fun block(
+    inline fun block(
         openLine: String,
         closeLine: String = "}",
         block: CodeWriter.() -> Unit,
@@ -224,11 +224,11 @@ class CodeWriter {
         /**
          * Create a CodeWriter and run the builder block.
          */
-        fun write(block: CodeWriter.() -> Unit): String = CodeWriter().apply(block).buildWithNewline()
+        inline fun write(block: CodeWriter.() -> Unit): String = CodeWriter().apply(block).buildWithNewline()
     }
 }
 
 /**
  * Extension function for easily creating code blocks.
  */
-fun codeWriter(block: CodeWriter.() -> Unit): String = CodeWriter.write(block)
+inline fun codeWriter(block: CodeWriter.() -> Unit): String = CodeWriter.write(block)

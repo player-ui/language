@@ -78,27 +78,19 @@ class ClassGenerator(
             ?.associateBy { it.symbol }
             ?: emptyMap()
 
-    private val nestedTypeSpecs = mutableListOf<TypeSpec>()
-
     private val mainBuilderName: String =
         TypeMapper.toBuilderClassName(document.name.removeSuffix("Asset"))
-
-    private val cachedProperties: List<PropertyInfo> by lazy {
-        objectType.properties.map { (name, prop) ->
-            createPropertyInfo(name, prop)
-        }
-    }
 
     /**
      * Generate the builder class for the XLR document.
      */
     fun generate(): GeneratedClass {
-        nestedTypeSpecs.clear()
+        val nestedTypeSpecs = mutableListOf<TypeSpec>()
         val className = mainBuilderName
         val dslFunctionName = TypeMapper.toDslFunctionName(document.name)
         val assetType = extractAssetTypeConstant(objectType.extends)
 
-        val classSpec = buildMainClass(className, assetType)
+        val classSpec = buildMainClass(className, assetType, nestedTypeSpecs)
         val dslFunction = buildDslFunction(dslFunctionName, className, objectType.description)
 
         val fileBuilder =
@@ -119,6 +111,7 @@ class ClassGenerator(
     private fun buildMainClass(
         className: String,
         assetType: String?,
+        nestedTypeSpecs: MutableList<TypeSpec>,
     ): TypeSpec {
         val builder =
             TypeSpec
@@ -132,7 +125,7 @@ class ClassGenerator(
         addIdProperty(builder)
 
         // Schema-driven properties
-        collectProperties().forEach { prop ->
+        collectProperties(nestedTypeSpecs).forEach { prop ->
             addPropertyMembers(builder, prop, className, generateWithMethods = true)
         }
 
@@ -156,22 +149,31 @@ class ClassGenerator(
         )
 
         // assetWrapperProperties
-        val awProps = collectProperties().filter { it.isAssetWrapper }
+        val allProps =
+            objectType.properties.map { (name, prop) ->
+                val context = TypeMapperContext(genericTokens = genericTokens)
+                val typeInfo = TypeMapper.mapToKotlinType(prop.node, context)
+                val isAssetWrapper = typeInfo.isAssetWrapper || isAssetWrapperRef(prop.node)
+                val isArray = typeInfo.isArray
+                Triple(name, isAssetWrapper, isArray)
+            }
+
+        val awProps = allProps.filter { it.second }.map { it.first }
         builder.addProperty(
             PropertySpec
                 .builder("assetWrapperProperties", SET.parameterizedBy(STRING))
                 .addModifiers(KModifier.OVERRIDE)
-                .initializer(buildSetInitializer(awProps.map { it.originalName }))
+                .initializer(buildSetInitializer(awProps))
                 .build(),
         )
 
         // arrayProperties
-        val arrProps = collectProperties().filter { it.isArray }
+        val arrProps = allProps.filter { it.third }.map { it.first }
         builder.addProperty(
             PropertySpec
                 .builder("arrayProperties", SET.parameterizedBy(STRING))
                 .addModifiers(KModifier.OVERRIDE)
-                .initializer(buildSetInitializer(arrProps.map { it.originalName }))
+                .initializer(buildSetInitializer(arrProps))
                 .build(),
         )
 
@@ -188,6 +190,34 @@ class ClassGenerator(
                     .build(),
             )
         }
+    }
+
+    /**
+     * Adds empty override properties for nested classes.
+     * Nested classes don't have asset wrapper properties or defaults.
+     */
+    private fun addEmptyOverrideProperties(builder: TypeSpec.Builder) {
+        builder.addProperty(
+            PropertySpec
+                .builder("defaults", MAP_STRING_ANY)
+                .addModifiers(KModifier.OVERRIDE)
+                .initializer("emptyMap()")
+                .build(),
+        )
+        builder.addProperty(
+            PropertySpec
+                .builder("assetWrapperProperties", SET.parameterizedBy(STRING))
+                .addModifiers(KModifier.OVERRIDE)
+                .initializer("emptySet()")
+                .build(),
+        )
+        builder.addProperty(
+            PropertySpec
+                .builder("arrayProperties", SET.parameterizedBy(STRING))
+                .addModifiers(KModifier.OVERRIDE)
+                .initializer("emptySet()")
+                .build(),
+        )
     }
 
     private fun addIdProperty(builder: TypeSpec.Builder) {
@@ -266,25 +296,22 @@ class ClassGenerator(
         val nullableType = baseType.copy(nullable = true)
         val poetName = cleanName(prop.kotlinName)
 
-        val propBuilder =
-            PropertySpec
-                .builder(poetName, nullableType)
-                .mutable(true)
-        prop.typeInfo.description?.let { propBuilder.addKdoc("%L", it) }
-        propBuilder
-            .getter(
-                FunSpec
-                    .getterBuilder()
-                    .addStatement("return peek(%S) as? %T", prop.originalName, baseType)
-                    .build(),
-            ).setter(
-                FunSpec
-                    .setterBuilder()
-                    .addParameter("value", nullableType)
-                    .addStatement("set(%S, value)", prop.originalName)
-                    .build(),
-            )
-        classBuilder.addProperty(propBuilder.build())
+        val getter =
+            FunSpec
+                .getterBuilder()
+                .addStatement("return peek(%S) as? %T", prop.originalName, baseType)
+                .build()
+
+        val setter =
+            FunSpec
+                .setterBuilder()
+                .addParameter("value", nullableType)
+                .addStatement("set(%S, value)", prop.originalName)
+                .build()
+
+        classBuilder.addProperty(
+            createProperty(poetName, nullableType, prop.typeInfo.description, getter, setter),
+        )
 
         // Binding overload
         if (prop.hasBindingOverload) {
@@ -323,29 +350,26 @@ class ClassGenerator(
         val poetName = cleanName(prop.kotlinName)
         val type = FLUENT_BUILDER_BASE_STAR.copy(nullable = true)
 
-        val propBuilder =
-            PropertySpec
-                .builder(poetName, type)
-                .mutable(true)
-        prop.typeInfo.description?.let { propBuilder.addKdoc("%L", it) }
-        propBuilder
-            .getter(
-                FunSpec
-                    .getterBuilder()
-                    .addComment("Write-only")
-                    .addStatement("return null")
-                    .build(),
-            ).setter(
-                FunSpec
-                    .setterBuilder()
-                    .addParameter("value", type)
-                    .addStatement(
-                        "if (value != null) set(%S, %T(value))",
-                        prop.originalName,
-                        ASSET_WRAPPER_BUILDER,
-                    ).build(),
-            )
-        classBuilder.addProperty(propBuilder.build())
+        val getter =
+            FunSpec
+                .getterBuilder()
+                .addComment("Write-only")
+                .addStatement("return null")
+                .build()
+
+        val setter =
+            FunSpec
+                .setterBuilder()
+                .addParameter("value", type)
+                .addStatement(
+                    "if (value != null) set(%S, %T(value))",
+                    prop.originalName,
+                    ASSET_WRAPPER_BUILDER,
+                ).build()
+
+        classBuilder.addProperty(
+            createProperty(poetName, type, prop.typeInfo.description, getter, setter),
+        )
 
         // Typed builder function
         val typeVar = TypeVariableName("T", FLUENT_BUILDER_BASE_STAR)
@@ -372,26 +396,23 @@ class ClassGenerator(
         val poetName = cleanName(prop.kotlinName)
         val listType = LIST.parameterizedBy(FLUENT_BUILDER_BASE_STAR).copy(nullable = true)
 
-        val propBuilder =
-            PropertySpec
-                .builder(poetName, listType)
-                .mutable(true)
-        prop.typeInfo.description?.let { propBuilder.addKdoc("%L", it) }
-        propBuilder
-            .getter(
-                FunSpec
-                    .getterBuilder()
-                    .addComment("Write-only")
-                    .addStatement("return null")
-                    .build(),
-            ).setter(
-                FunSpec
-                    .setterBuilder()
-                    .addParameter("value", listType)
-                    .addStatement("set(%S, value)", prop.originalName)
-                    .build(),
-            )
-        classBuilder.addProperty(propBuilder.build())
+        val getter =
+            FunSpec
+                .getterBuilder()
+                .addComment("Write-only")
+                .addStatement("return null")
+                .build()
+
+        val setter =
+            FunSpec
+                .setterBuilder()
+                .addParameter("value", listType)
+                .addStatement("set(%S, value)", prop.originalName)
+                .build()
+
+        classBuilder.addProperty(
+            createProperty(poetName, listType, prop.typeInfo.description, getter, setter),
+        )
 
         // Varargs function
         classBuilder.addFunction(
@@ -420,25 +441,22 @@ class ClassGenerator(
         val listType = LIST.parameterizedBy(elementType)
         val nullableListType = listType.copy(nullable = true)
 
-        val propBuilder =
-            PropertySpec
-                .builder(poetName, nullableListType)
-                .mutable(true)
-        prop.typeInfo.description?.let { propBuilder.addKdoc("%L", it) }
-        propBuilder
-            .getter(
-                FunSpec
-                    .getterBuilder()
-                    .addStatement("return peek(%S) as? %T", prop.originalName, listType)
-                    .build(),
-            ).setter(
-                FunSpec
-                    .setterBuilder()
-                    .addParameter("value", nullableListType)
-                    .addStatement("set(%S, value)", prop.originalName)
-                    .build(),
-            )
-        classBuilder.addProperty(propBuilder.build())
+        val getter =
+            FunSpec
+                .getterBuilder()
+                .addStatement("return peek(%S) as? %T", prop.originalName, listType)
+                .build()
+
+        val setter =
+            FunSpec
+                .setterBuilder()
+                .addParameter("value", nullableListType)
+                .addStatement("set(%S, value)", prop.originalName)
+                .build()
+
+        classBuilder.addProperty(
+            createProperty(poetName, nullableListType, prop.typeInfo.description, getter, setter),
+        )
 
         // Varargs function
         classBuilder.addFunction(
@@ -461,29 +479,31 @@ class ClassGenerator(
         generateWithMethods: Boolean,
     ) {
         val poetName = cleanName(prop.kotlinName)
-        val nestedClassName = ClassName(packageName, prop.nestedObjectClassName!!)
+        val nestedClassName =
+            ClassName(
+                packageName,
+                prop.nestedObjectClassName
+                    ?: error("nestedObjectClassName is required for nested object property"),
+            )
         val nullableType = nestedClassName.copy(nullable = true)
 
-        val propBuilder =
-            PropertySpec
-                .builder(poetName, nullableType)
-                .mutable(true)
-        prop.typeInfo.description?.let { propBuilder.addKdoc("%L", it) }
-        propBuilder
-            .getter(
-                FunSpec
-                    .getterBuilder()
-                    .addComment("Write-only")
-                    .addStatement("return null")
-                    .build(),
-            ).setter(
-                FunSpec
-                    .setterBuilder()
-                    .addParameter("value", nullableType)
-                    .addStatement("if (value != null) set(%S, value)", prop.originalName)
-                    .build(),
-            )
-        classBuilder.addProperty(propBuilder.build())
+        val getter =
+            FunSpec
+                .getterBuilder()
+                .addComment("Write-only")
+                .addStatement("return null")
+                .build()
+
+        val setter =
+            FunSpec
+                .setterBuilder()
+                .addParameter("value", nullableType)
+                .addStatement("if (value != null) set(%S, value)", prop.originalName)
+                .build()
+
+        classBuilder.addProperty(
+            createProperty(poetName, nullableType, prop.typeInfo.description, getter, setter),
+        )
 
         // Lambda DSL function
         val lambdaType = LambdaTypeName.get(receiver = nestedClassName, returnType = UNIT)
@@ -508,6 +528,28 @@ class ClassGenerator(
                     .build(),
             )
         }
+    }
+
+    /**
+     * Creates a property with getter and setter, optionally adding KDoc.
+     */
+    private fun createProperty(
+        name: String,
+        type: TypeName,
+        description: String?,
+        getter: FunSpec,
+        setter: FunSpec,
+    ): PropertySpec {
+        val builder =
+            PropertySpec
+                .builder(name, type)
+                .mutable(true)
+                .getter(getter)
+                .setter(setter)
+
+        description?.let { builder.addKdoc("%L", it) }
+
+        return builder.build()
     }
 
     private fun addWithMethod(
@@ -554,6 +596,7 @@ class ClassGenerator(
     private fun generateNestedClass(
         propertyName: String,
         objectType: ObjectType,
+        nestedTypeSpecs: MutableList<TypeSpec>,
     ): String {
         val baseName = mainBuilderName.removeSuffix("Builder")
         val className = baseName + propertyName.replaceFirstChar { it.uppercase() } + "Config"
@@ -567,50 +610,14 @@ class ClassGenerator(
 
         objectType.description?.let { builder.addKdoc("%L", it) }
 
-        builder.addProperty(
-            PropertySpec
-                .builder("defaults", MAP_STRING_ANY)
-                .addModifiers(KModifier.OVERRIDE)
-                .initializer("emptyMap()")
-                .build(),
-        )
-        builder.addProperty(
-            PropertySpec
-                .builder("assetWrapperProperties", SET.parameterizedBy(STRING))
-                .addModifiers(KModifier.OVERRIDE)
-                .initializer("emptySet()")
-                .build(),
-        )
-        builder.addProperty(
-            PropertySpec
-                .builder("arrayProperties", SET.parameterizedBy(STRING))
-                .addModifiers(KModifier.OVERRIDE)
-                .initializer("emptySet()")
-                .build(),
-        )
+        addEmptyOverrideProperties(builder)
 
         objectType.properties.forEach { (propName, propObj) ->
-            val propInfo = createPropertyInfo(propName, propObj, allowNestedGeneration = false)
+            val propInfo = createPropertyInfo(propName, propObj, nestedTypeSpecs, allowNestedGeneration = false)
             addPropertyMembers(builder, propInfo, className, generateWithMethods = false)
         }
 
-        builder.addFunction(
-            FunSpec
-                .builder("build")
-                .addModifiers(KModifier.OVERRIDE)
-                .addParameter("context", BUILD_CONTEXT.copy(nullable = true))
-                .returns(MAP_STRING_ANY)
-                .addStatement("return buildWithDefaults(context)")
-                .build(),
-        )
-        builder.addFunction(
-            FunSpec
-                .builder("clone")
-                .addModifiers(KModifier.OVERRIDE)
-                .returns(classType)
-                .addStatement("return %T().also { cloneStorageTo(it) }", classType)
-                .build(),
-        )
+        addBuildAndCloneMethods(builder, className)
 
         nestedTypeSpecs.add(builder.build())
         return className
@@ -640,11 +647,17 @@ class ClassGenerator(
         return builder.build()
     }
 
-    private fun collectProperties(): List<PropertyInfo> = cachedProperties
+    private fun collectProperties(nestedTypeSpecs: MutableList<TypeSpec>): List<PropertyInfo> {
+        // Recompute properties with the provided nestedTypeSpecs
+        return objectType.properties.map { (name, prop) ->
+            createPropertyInfo(name, prop, nestedTypeSpecs)
+        }
+    }
 
     private fun createPropertyInfo(
         name: String,
         prop: ObjectProperty,
+        nestedTypeSpecs: MutableList<TypeSpec>,
         allowNestedGeneration: Boolean = true,
     ): PropertyInfo {
         val context = TypeMapperContext(genericTokens = genericTokens)
@@ -654,7 +667,7 @@ class ClassGenerator(
         val isNestedObject = allowNestedGeneration && prop.node is ObjectType
         val nestedClassName =
             if (isNestedObject) {
-                generateNestedClass(name, prop.node as ObjectType)
+                generateNestedClass(name, prop.node as ObjectType, nestedTypeSpecs)
             } else {
                 null
             }
@@ -727,23 +740,34 @@ class ClassGenerator(
         for (i in str.indices) {
             when (str[i]) {
                 '<' -> depth++
-                '>' -> depth--
+                '>' -> {
+                    depth--
+                    // Malformed input: unmatched closing bracket
+                    if (depth < 0) return -1
+                }
                 ',' -> if (depth == 0) return i
             }
         }
+        // No comma found at depth 0, or unclosed brackets
         return -1
     }
 
     /**
      * Recursively finds all paths to AssetWrapper properties within an ObjectType.
      * Returns paths with length >= 2 (single-level paths are handled by assetWrapperProperties).
+     *
+     * Uses object instance tracking to prevent infinite recursion on circular references.
      */
     private fun findAssetWrapperPaths(
         rootType: ObjectType,
         currentPath: List<String> = emptyList(),
-        visited: MutableSet<String> = mutableSetOf(),
+        visited: MutableSet<ObjectType> = mutableSetOf(),
     ): List<List<String>> {
+        // Prevent cycles by checking if we've already visited this object instance
+        if (rootType in visited) return emptyList()
+
         val paths = mutableListOf<List<String>>()
+        visited.add(rootType)
 
         for ((propName, prop) in rootType.properties) {
             val node = prop.node
@@ -760,11 +784,7 @@ class ClassGenerator(
                 }
                 // Nested ObjectType — recurse
                 node is ObjectType -> {
-                    val typeName = node.name
-                    if (typeName != null && typeName in visited) continue
-                    if (typeName != null) visited.add(typeName)
                     paths.addAll(findAssetWrapperPaths(node, fullPath, visited))
-                    if (typeName != null) visited.remove(typeName)
                 }
             }
         }
@@ -819,11 +839,22 @@ class ClassGenerator(
          */
         internal fun shouldHaveOverload(typeName: String): Boolean = typeName in PRIMITIVE_OVERLOAD_TYPES
 
-        private fun cleanName(kotlinName: String): String =
-            kotlinName.removePrefix("`").removeSuffix("`")
+        /**
+         * Extension function to remove Kotlin backtick escaping from a name.
+         */
+        private fun String.cleanKotlinName(): String =
+            removePrefix("`").removeSuffix("`")
 
-        private fun withMethodName(poetName: String): String =
-            "with${poetName.replaceFirstChar { it.uppercase() }}"
+        /**
+         * Extension function to convert a property name to a "with" method name.
+         */
+        private fun String.toWithMethodName(): String =
+            "with${replaceFirstChar { it.uppercase() }}"
+
+        // Keep the old functions for backward compatibility within the class
+        private fun cleanName(kotlinName: String): String = kotlinName.cleanKotlinName()
+
+        private fun withMethodName(poetName: String): String = poetName.toWithMethodName()
     }
 }
 
