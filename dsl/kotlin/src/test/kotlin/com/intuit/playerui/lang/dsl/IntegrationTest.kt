@@ -147,7 +147,7 @@ class IntegrationTest :
                 values.size shouldBe 3
 
                 values[0]["type"] shouldBe "input"
-                values[0]["binding"] shouldBe "{{user.firstName}}"
+                values[0]["binding"] shouldBe "user.firstName"
                 values[0]["placeholder"] shouldBe "Enter your first name"
 
                 val firstNameLabel = values[0]["label"] as Map<String, Any?>
@@ -188,16 +188,14 @@ class IntegrationTest :
                 result["id"] shouldBe "user-list"
                 result["type"] shouldBe "collection"
 
-                // Verify template is added to values array
-                val values = result["values"] as List<Any?>
-                values.size shouldBe 1
+                // Verify templates are in top-level template[] array
+                val templates = result["template"] as List<Map<String, Any?>>
+                templates.size shouldBe 1
 
-                val templateWrapper = values[0] as Map<String, Any?>
-                templateWrapper.containsKey("dynamicTemplate") shouldBe true
-
-                val templateData = templateWrapper["dynamicTemplate"] as Map<String, Any?>
+                val templateData = templates[0]
                 templateData["data"] shouldBe "{{users}}"
                 templateData["output"] shouldBe "values"
+                templateData["dynamic"] shouldBe true
 
                 val templateValue = templateData["value"] as Map<String, Any?>
                 templateValue["asset"] shouldNotBe null

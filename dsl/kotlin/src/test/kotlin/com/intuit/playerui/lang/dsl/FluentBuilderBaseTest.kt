@@ -76,7 +76,7 @@ class FluentBuilderBaseTest :
                     }.build()
 
                 result["type"] shouldBe "input"
-                result["binding"] shouldBe "{{user.email}}"
+                result["binding"] shouldBe "user.email"
                 result["placeholder"] shouldBe "Enter email"
             }
 

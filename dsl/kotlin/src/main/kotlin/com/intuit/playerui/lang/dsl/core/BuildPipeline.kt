@@ -99,7 +99,11 @@ object BuildPipeline {
                 }
 
                 is StoredValue.Tagged -> {
-                    result[key] = stored.value.toString()
+                    result[key] = if (key == "binding" || key == "data") {
+                        stored.value.toValue()
+                    } else {
+                        stored.value.toString()
+                    }
                 }
 
                 // Builder/WrappedBuilder/ObjectValue/ArrayValue handled in later steps
@@ -120,11 +124,12 @@ object BuildPipeline {
         if (context == null) return
 
         val type = result["type"] as? String
+        // Not an asset (no type field) — skip ID generation
+        if (type == null) return
         val binding = result["binding"] as? String
         val value = result["value"] as? String
-        val assetMetadata = if (type != null) AssetMetadata(type, binding, value) else null
-        val parameterName = type ?: "asset"
-        val slotName = determineSlotName(parameterName, assetMetadata)
+        val assetMetadata = AssetMetadata(type, binding, value)
+        val slotName = determineSlotName(type, assetMetadata)
 
         val generatedId =
             when {
@@ -421,16 +426,25 @@ object BuildPipeline {
         val switches = auxiliary.getList(AuxiliaryStorage.SWITCHES)
         if (switches.isEmpty()) return
 
+        var globalCaseIndex = 0
         switches.forEach { switchMeta ->
             val (path, args) = switchMeta
             val switchKey = if (args.isDynamic) "dynamicSwitch" else "staticSwitch"
 
+            val propertyName = path.firstOrNull()?.toString() ?: ""
+            val switchParentId = if (context?.parentId?.isNotEmpty() == true) {
+                "${context.parentId}-$propertyName"
+            } else {
+                propertyName
+            }
+            val switchContext = context?.withParentId(switchParentId)?.clearBranch()
+
             val resolvedCases =
                 args.cases.mapIndexed { index, case ->
                     val caseContext =
-                        context?.withBranch(
+                        switchContext?.withBranch(
                             IdBranch.Switch(
-                                index = index,
+                                index = globalCaseIndex + index,
                                 kind =
                                     if (args.isDynamic) {
                                         IdBranch.Switch.SwitchKind.DYNAMIC
@@ -458,7 +472,6 @@ object BuildPipeline {
             // wrap the switch result in an array to match the expected schema type.
             // Only wrap if we're replacing the entire property (path.size == 1),
             // not a specific element in the array (path.size > 1)
-            val propertyName = path.firstOrNull()?.toString() ?: ""
             var switchResult: Any = mapOf(switchKey to resolvedCases)
 
             if (propertyName in arrayProperties && path.size == 1) {
@@ -467,6 +480,8 @@ object BuildPipeline {
 
             // Inject switch at the specified path
             injectAtPath(result, path, switchResult)
+
+            globalCaseIndex += args.cases.size
         }
     }
 
@@ -481,14 +496,13 @@ object BuildPipeline {
         val templates = auxiliary.getList(AuxiliaryStorage.TEMPLATES)
         if (templates.isEmpty()) return
 
-        templates.forEach { templateFn ->
+        val resolvedTemplates = templates.map { templateFn ->
             val templateContext = context ?: BuildContext()
             val config = templateFn(templateContext)
 
-            val templateKey = if (config.dynamic) "dynamicTemplate" else "template"
-
             val templateDepth = extractTemplateDepth(context)
-            val valueContext = templateContext.withBranch(IdBranch.Template(templateDepth))
+            val newParentId = genId(templateContext)
+            val valueContext = templateContext.copy(parentId = newParentId, branch = IdBranch.Template(templateDepth))
 
             val resolvedValue =
                 when (val v = config.value) {
@@ -496,18 +510,14 @@ object BuildPipeline {
                     else -> resolveValue(v)
                 }
 
-            val templateData =
-                mapOf(
-                    "data" to config.data,
-                    "output" to config.output,
-                    "value" to resolvedValue,
-                )
-
-            // Get existing array or create new one
-            val existingArray = (result[config.output] as? List<*>)?.toMutableList() ?: mutableListOf<Any?>()
-            existingArray.add(mapOf(templateKey to templateData))
-            result[config.output] = existingArray
+            buildMap {
+                put("data", config.data)
+                put("output", config.output)
+                put("value", resolvedValue)
+                if (config.dynamic) put("dynamic", true)
+            }
         }
+        result["template"] = resolvedTemplates
     }
 
     /**
@@ -574,14 +584,7 @@ object BuildPipeline {
                 when {
                     current is MutableMap<*, *> && segment is String -> {
                         val map = current.asMutableStringMap()
-                        val existing = map[segment]
-                        if (existing is Map<*, *> && value is Map<*, *>) {
-                            val existingMap = existing.asStringMap()
-                            val valueMap = value.asStringMap()
-                            map[segment] = existingMap + valueMap
-                        } else {
-                            map[segment] = value
-                        }
+                        map[segment] = value
                     }
                 }
             } else {
