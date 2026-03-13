@@ -142,25 +142,27 @@ class IntegrationTest :
                 formLabelAsset["type"] shouldBe "text"
                 formLabelAsset["value"] shouldBe "User Registration"
 
-                // Verify inputs with bindings
+                // Verify inputs with bindings (each wrapped in AssetWrapper)
                 val values = form["values"] as List<Map<String, Any?>>
                 values.size shouldBe 3
 
-                values[0]["type"] shouldBe "input"
-                values[0]["binding"] shouldBe "user.firstName"
-                values[0]["placeholder"] shouldBe "Enter your first name"
+                val firstValue = values[0]["asset"] as Map<String, Any?>
+                firstValue["type"] shouldBe "input"
+                firstValue["binding"] shouldBe "user.firstName"
+                firstValue["placeholder"] shouldBe "Enter your first name"
 
-                val firstNameLabel = values[0]["label"] as Map<String, Any?>
+                val firstNameLabel = firstValue["label"] as Map<String, Any?>
                 val firstNameLabelAsset = firstNameLabel["asset"] as Map<String, Any?>
                 firstNameLabelAsset["value"] shouldBe "First Name"
 
-                // Verify actions
+                // Verify actions (each wrapped in AssetWrapper)
                 val actions = form["actions"] as List<Map<String, Any?>>
                 actions.size shouldBe 2
 
-                actions[0]["type"] shouldBe "action"
-                actions[0]["value"] shouldBe "submit"
-                actions[0]["metaData"] shouldBe mapOf("role" to "primary")
+                val firstAction = actions[0]["asset"] as Map<String, Any?>
+                firstAction["type"] shouldBe "action"
+                firstAction["value"] shouldBe "submit"
+                firstAction["metaData"] shouldBe mapOf("role" to "primary")
 
                 // Verify JSON is serializable
                 val jsonString = result.toJson()

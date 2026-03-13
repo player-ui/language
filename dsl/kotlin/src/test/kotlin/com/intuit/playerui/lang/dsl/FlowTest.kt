@@ -82,8 +82,10 @@ class FlowTest :
 
                 val values = firstView["values"] as List<Map<String, Any?>>
                 values.size shouldBe 2
-                values[0]["id"] shouldBe "registration-views-0-collection-values-0-input-firstName"
-                values[1]["id"] shouldBe "registration-views-0-collection-values-1-input-lastName"
+                val firstInput = values[0]["asset"] as Map<String, Any?>
+                firstInput["id"] shouldBe "registration-views-0-collection-values-0-input-firstName"
+                val secondInput = values[1]["asset"] as Map<String, Any?>
+                secondInput["id"] shouldBe "registration-views-0-collection-values-1-input-lastName"
             }
 
             it("includes data when provided") {
@@ -215,10 +217,11 @@ class FlowTest :
                 labelAsset["type"] shouldBe "text"
                 labelAsset["value"] shouldBe "Form"
 
-                // Verify actions
+                // Verify actions (each wrapped in AssetWrapper)
                 val actions = formView["actions"] as List<Map<String, Any?>>
                 actions.size shouldBe 1
-                actions[0]["value"] shouldBe "submit"
+                val firstAction = actions[0]["asset"] as Map<String, Any?>
+                firstAction["value"] shouldBe "submit"
             }
         }
 

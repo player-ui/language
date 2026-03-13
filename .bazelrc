@@ -17,6 +17,10 @@ common --remote_cache_compression --remote_cache_async
 # Python config
 common --incompatible_default_to_explicit_init_py
 
+# Java toolchain config - use Java 21 for Kotlin compilation and annotation processing
+common --java_runtime_version=remotejdk_21
+common --tool_java_runtime_version=remotejdk_21
+
 # CI Config 
 common:ci --build_metadata=ROLE=CI
 common:ci --local_resources=cpu=4

@@ -1,5 +1,6 @@
 import { Asset, Flow, DataModel, Navigation, Schema } from "@player-ui/types";
 import { BaseBuildContext, BranchTypes } from "../base-builder";
+import { IDRegistry } from "../base-builder/id/registry";
 
 /**
  * Core options for creating a Player-UI Flow
@@ -71,6 +72,7 @@ export function flow<T extends Asset = Asset>(
   const flowId = options.id || "root";
 
   const viewsNamespace = `${flowId}-views`;
+  const registry = new IDRegistry();
 
   const processedViews = (() => {
     const processViews = (): T[] => {
@@ -84,6 +86,7 @@ export function flow<T extends Asset = Asset>(
             type: BranchTypes.ARRAY_ITEM,
             index,
           },
+          idRegistry: registry,
           ...(options.context ?? {}),
         };
 

@@ -131,11 +131,11 @@ function wrapAsset<T extends Asset, C extends BaseBuildContext>(
     return { asset: { ...asset } };
   }
 
-  // Generate ID using slot branch for assets without IDs
   const parentId = peekId(context);
   const slotCtx: BaseBuildContext = {
     parentId,
     branch: { type: BranchTypes.SLOT, name: slotName },
+    idRegistry: context.idRegistry,
   };
 
   return {

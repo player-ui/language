@@ -57,3 +57,62 @@ kt_jvm(
     ],
     pom_template = ":pom.tpl",
 )
+
+# Benchmark support with JMH
+
+# AllOpen plugin for JMH @State annotations (makes classes open)
+kt_compiler_plugin(
+    name = "open_for_jmh_plugin",
+    id = "org.jetbrains.kotlin.allopen",
+    options = {
+        "annotation": "org.openjdk.jmh.annotations.State",
+    },
+    deps = [
+        "@maven//:org_jetbrains_kotlin_kotlin_allopen",
+    ],
+)
+
+# JMH annotation processor as java_plugin
+java_plugin(
+    name = "jmh_annotation_processor",
+    processor_class = "org.openjdk.jmh.generators.BenchmarkProcessor",
+    deps = [
+        "@maven//:org_openjdk_jmh_jmh_generator_annprocess",
+    ],
+)
+
+# JMH library with exported annotation processor
+java_library(
+    name = "jmh_lib",
+    exports = ["@maven//:org_openjdk_jmh_jmh_core"],
+    exported_plugins = [":jmh_annotation_processor"],
+)
+
+kt_jvm_library(
+    name = "kotlin-dsl-benchmarks",
+    srcs = glob(["src/benchmark/kotlin/**/*.kt"]),
+    testonly = True,
+    kotlinc_opts = "//:kt_opts",  # Java 21 target to match main DSL
+    deps = [
+        ":kotlin-dsl",
+        ":kotlin-dsl-test",
+        ":jmh_lib",  # Uses exported_plugins for annotation processing
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+    plugins = [":open_for_jmh_plugin"],  # Makes @State classes open
+)
+
+java_binary(
+    name = "run_benchmarks",
+    main_class = "org.openjdk.jmh.Main",
+    testonly = True,
+    runtime_deps = [":kotlin-dsl-benchmarks"],
+)
+
+java_binary(
+    name = "dump_scenarios",
+    main_class = "com.intuit.playerui.lang.dsl.benchmarks.shared.DumpScenariosKt",
+    testonly = True,
+    runtime_deps = [":kotlin-dsl-benchmarks"],
+)

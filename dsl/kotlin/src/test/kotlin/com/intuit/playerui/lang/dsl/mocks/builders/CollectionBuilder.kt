@@ -14,7 +14,7 @@ import com.intuit.playerui.lang.dsl.tagged.Binding
  */
 class CollectionBuilder : FluentBuilderBase<Map<String, Any?>>() {
     override val defaults: Map<String, Any?> = mapOf("type" to "collection")
-    override val assetWrapperProperties: Set<String> = setOf("label")
+    override val assetWrapperProperties: Set<String> = setOf("label", "values", "actions")
     override val arrayProperties: Set<String> = setOf("values", "actions")
 
     var id: String?

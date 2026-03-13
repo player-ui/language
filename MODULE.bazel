@@ -94,6 +94,9 @@ maven.install(
         "org.opentest4j:opentest4j:1.1.1",
         "com.intuit.playerui.xlr:xlr-types:0.2.0--canary.4.100-SNAPSHOT",
         "com.squareup:kotlinpoet-jvm:2.1.0",
+        "org.openjdk.jmh:jmh-core:1.37",
+        "org.openjdk.jmh:jmh-generator-annprocess:1.37",
+        "org.jetbrains.kotlin:kotlin-allopen:2.3.0",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",

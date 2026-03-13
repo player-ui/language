@@ -1,5 +1,6 @@
 import { Asset, AssetWrapper } from "@player-ui/types";
 import type { TaggedTemplateValue } from "../tagged-template/types";
+import type { IDRegistry } from "./id/registry";
 
 /**
  * Unique symbol to identify FunctionalBuilder instances
@@ -101,6 +102,7 @@ export interface BaseBuildContext {
   readonly branch?: IdBranch;
   readonly nestedContextGenerator?: NestedContextGenerator<BaseBuildContext>;
   readonly assetMetadata?: AssetMetadata;
+  readonly idRegistry?: IDRegistry;
   readonly [key: string]: unknown;
 }
 

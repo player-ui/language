@@ -72,6 +72,7 @@ export function createNestedContext<C extends BaseBuildContext>({
       generatedId = genId({
         parentId: parentContext.parentId,
         branch: { type: BranchTypes.SLOT, name: slotName },
+        idRegistry: parentContext.idRegistry,
       });
     }
   }

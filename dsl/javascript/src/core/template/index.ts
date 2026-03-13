@@ -126,13 +126,13 @@ export const template = <T extends Asset<string>>({
       );
     }
 
-    // Create template context for the value - use the generated parent ID to include slot context
     const templateValueCtx: BaseBuildContext = {
       parentId: genId(parentCtx),
       branch: {
         type: BranchTypes.TEMPLATE,
         depth: 0,
       },
+      idRegistry: parentCtx.idRegistry,
     };
 
     let resolvedAsset: T;

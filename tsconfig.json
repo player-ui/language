@@ -13,6 +13,7 @@
     "module": "commonjs",
     "allowJs": false,
     "moduleResolution": "node",
+    "allowImportingTsExtensions": true,
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,

@@ -27,6 +27,7 @@ typedoc
 /.factorypath
 /.idea/
 /.ijwb/
+/.metals/
 /.aswb/
 /.project
 /.settings
@@ -61,3 +62,7 @@ android-tools
 # Python
 __pycache__/
 *.pyc
+
+# Benchmark
+json/
+benchmark-results/

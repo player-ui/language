@@ -20,7 +20,7 @@ class IdRegistry {
      * @throws IllegalStateException if unable to generate unique ID after max attempts
      */
     fun ensureUnique(baseId: String): String {
-        if (registered.add(baseId)) {
+        if (isTemplatePlaceholderID(baseId) || registered.add(baseId)) {
             return baseId
         }
 
@@ -38,6 +38,14 @@ class IdRegistry {
         }
 
         error("Failed to generate unique ID for '$baseId' after $maxAttempts attempts")
+    }
+
+    /**
+     * IDs ending with a template placeholder (e.g., _index_, _index1_) are
+     * allowed as duplicates — they get resolved at runtime.
+     */
+    private fun isTemplatePlaceholderID(id: String): Boolean {
+        return Regex("_(?:index|row|item)\\d*_$").containsMatchIn(id)
     }
 
     /**

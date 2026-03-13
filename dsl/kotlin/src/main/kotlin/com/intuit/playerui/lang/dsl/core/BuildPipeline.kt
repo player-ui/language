@@ -500,9 +500,8 @@ object BuildPipeline {
             val templateContext = context ?: BuildContext()
             val config = templateFn(templateContext)
 
-            val templateDepth = extractTemplateDepth(context)
             val newParentId = genId(templateContext)
-            val valueContext = templateContext.copy(parentId = newParentId, branch = IdBranch.Template(templateDepth))
+            val valueContext = templateContext.copy(parentId = newParentId, branch = IdBranch.Template(depth = 0))
 
             val resolvedValue =
                 when (val v = config.value) {
@@ -610,11 +609,4 @@ object BuildPipeline {
         }
     }
 
-    /**
-     * Extracts the current template depth from context.
-     */
-    private fun extractTemplateDepth(context: BuildContext?): Int {
-        val branch = context?.branch
-        return if (branch is IdBranch.Template) branch.depth + 1 else 0
-    }
 }

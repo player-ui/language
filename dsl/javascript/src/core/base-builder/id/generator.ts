@@ -192,10 +192,9 @@ export const genId = (context: BaseBuildContext): string => {
     );
   }
 
-  // Ensure the generated ID is unique
-  const uniqueId = globalIdRegistry.ensureUnique(baseId);
+  const registry = context.idRegistry ?? globalIdRegistry;
+  const uniqueId = registry.ensureUnique(baseId);
 
-  // Warn if collision was detected
   if (process.env.NODE_ENV !== "production" && uniqueId !== baseId) {
     console.warn(
       `genId: ID collision detected. Original: "${baseId}", Modified to: "${uniqueId}". ` +
