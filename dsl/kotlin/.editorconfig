@@ -16,6 +16,7 @@ trim_trailing_whitespace = true
 # ktlint specific rules
 ktlint_standard_no-wildcard-imports = disabled
 ktlint_standard_package-name = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
 
 # Allow trailing commas
 ktlint_standard_trailing-comma-on-call-site = disabled

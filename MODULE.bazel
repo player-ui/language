@@ -68,6 +68,7 @@ use_repo(pip, "pypi")
 
 ####### Kotlin #########
 bazel_dep(name = "rules_kotlin", version = "2.2.1")
+bazel_dep(name = "rules_android", version = "0.7.1")
 bazel_dep(name = "rules_detekt", version = "0.8.1.13")
 bazel_dep(name = "rules_jvm_external", version = "6.9")
 

@@ -1,4 +1,4 @@
-load("@rules_player//kotlin:defs.bzl", "kt_jvm")
+load("@rules_player//kotlin:defs.bzl", "kt_android", "kt_jvm")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:lint.bzl", "ktlint_config")
@@ -49,6 +49,29 @@ kt_jvm(
     test_package = "com.intuit.playerui.lang.dsl",
     test_opts = "//:kt_opts",
     test_deps = [
+        "@maven//:io_kotest_kotest_assertions_core",
+        "@maven//:io_kotest_kotest_assertions_json",
+        "@maven//:io_kotest_kotest_runner_junit5",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+    pom_template = ":pom.tpl",
+)
+
+kt_android(
+    name = "kotlin-dsl-android",
+    group = GROUP,
+    version = VERSION,
+    lint_config = ":lint_config",
+    main_opts = "//:kt_opts",
+    plugins = [":serialization_plugin"],
+    main_deps = [
+        "@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+    unit_test_package = "com.intuit.playerui.lang.dsl",
+    unit_test_opts = "//:kt_opts",
+    unit_test_deps = [
         "@maven//:io_kotest_kotest_assertions_core",
         "@maven//:io_kotest_kotest_assertions_json",
         "@maven//:io_kotest_kotest_runner_junit5",
