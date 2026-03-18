@@ -109,10 +109,8 @@ class Expression<T>(
                 }
 
                 ')', ']', '}' -> {
-                    if (stack.isEmpty()) {
-                        throw IllegalArgumentException(
-                            "Unexpected $char at character $index in expression: $expression",
-                        )
+                    require(stack.isNotEmpty()) {
+                        "Unexpected $char at character $index in expression: $expression"
                     }
                     val (opening, openPos) = stack.removeLast()
                     val expected =
@@ -120,7 +118,7 @@ class Expression<T>(
                             ')' -> '('
                             ']' -> '['
                             '}' -> '{'
-                            else -> throw IllegalStateException()
+                            else -> error("Unreachable: char already matched to closing bracket")
                         }
                     require(opening == expected) {
                         "Mismatched brackets: found $char at character $index but expected ${getClosing(opening)} to match $opening at character $openPos in expression: $expression"

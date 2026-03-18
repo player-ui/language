@@ -5,29 +5,17 @@ import com.intuit.playerui.lang.dsl.id.genId
 import com.intuit.playerui.lang.dsl.id.peekId
 import com.intuit.playerui.lang.dsl.tagged.TaggedValue
 
+@Suppress("UNCHECKED_CAST")
+private fun Any.asMutableStringMap(): MutableMap<String, Any?> = this as MutableMap<String, Any?>
+
+@Suppress("UNCHECKED_CAST")
+private fun Any.asStringMap(): Map<String, Any?> = this as Map<String, Any?>
+
 /**
  * The 9-step build pipeline for resolving builder properties into final JSON.
  * Matches the TypeScript implementation's resolution order.
  */
 object BuildPipeline {
-    /**
-     * Type-safe helper to cast Map to mutable string-keyed map.
-     *
-     * @receiver Any value that is known to be a Map<String, Any?>
-     * @return The value cast to MutableMap<String, Any?>
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun Any.asMutableStringMap(): MutableMap<String, Any?> = this as MutableMap<String, Any?>
-
-    /**
-     * Type-safe helper to cast Map to immutable string-keyed map.
-     *
-     * @receiver Any value that is known to be a Map<String, Any?>
-     * @return The value cast to Map<String, Any?>
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun Any.asStringMap(): Map<String, Any?> = this as Map<String, Any?>
-
     /**
      * Executes the full build pipeline.
      *

@@ -735,92 +735,6 @@ class ClassGenerator(
         }
     }
 
-    private fun findTopLevelComma(str: String): Int {
-        var depth = 0
-        for (i in str.indices) {
-            when (str[i]) {
-                '<' -> depth++
-                '>' -> {
-                    depth--
-                    // Malformed input: unmatched closing bracket
-                    if (depth < 0) return -1
-                }
-                ',' -> if (depth == 0) return i
-            }
-        }
-        // No comma found at depth 0, or unclosed brackets
-        return -1
-    }
-
-    /**
-     * Recursively finds all paths to AssetWrapper properties within an ObjectType.
-     * Returns paths with length >= 2 (single-level paths are handled by assetWrapperProperties).
-     *
-     * Uses object instance tracking to prevent infinite recursion on circular references.
-     */
-    private fun findAssetWrapperPaths(
-        rootType: ObjectType,
-        currentPath: List<String> = emptyList(),
-        visited: MutableSet<ObjectType> = mutableSetOf(),
-    ): List<List<String>> {
-        // Prevent cycles by checking if we've already visited this object instance
-        if (rootType in visited) return emptyList()
-
-        val paths = mutableListOf<List<String>>()
-        visited.add(rootType)
-
-        for ((propName, prop) in rootType.properties) {
-            val node = prop.node
-            val fullPath = currentPath + propName
-
-            when {
-                // Direct AssetWrapper property
-                isAssetWrapperRef(node) -> {
-                    if (fullPath.size >= 2) paths.add(fullPath)
-                }
-                // Array of AssetWrappers
-                node is ArrayType && isAssetWrapperRef(node.elementType) -> {
-                    if (fullPath.size >= 2) paths.add(fullPath)
-                }
-                // Nested ObjectType — recurse
-                node is ObjectType -> {
-                    paths.addAll(findAssetWrapperPaths(node, fullPath, visited))
-                }
-            }
-        }
-
-        return paths
-    }
-
-    private fun buildNestedListInitializer(paths: List<List<String>>): CodeBlock {
-        val builder = CodeBlock.builder().add("listOf(")
-        paths.forEachIndexed { index, path ->
-            if (index > 0) builder.add(", ")
-            builder.add("listOf(")
-            path.forEachIndexed { pathIndex, segment ->
-                if (pathIndex > 0) builder.add(", ")
-                builder.add("%S", segment)
-            }
-            builder.add(")")
-        }
-        builder.add(")")
-        return builder.build()
-    }
-
-    private fun buildSetInitializer(names: List<String>): CodeBlock {
-        if (names.isEmpty()) return CodeBlock.of("emptySet()")
-        return CodeBlock
-            .builder()
-            .apply {
-                add("setOf(")
-                names.forEachIndexed { index, name ->
-                    if (index > 0) add(", ")
-                    add("%S", name)
-                }
-                add(")")
-            }.build()
-    }
-
     companion object {
         private val PRIMITIVE_OVERLOAD_TYPES = setOf("String", "Number", "Boolean")
 
@@ -845,6 +759,92 @@ class ClassGenerator(
         private fun withMethodName(poetName: String): String =
             "with${poetName.replaceFirstChar { it.uppercase() }}"
     }
+}
+
+private fun buildSetInitializer(names: List<String>): CodeBlock {
+    if (names.isEmpty()) return CodeBlock.of("emptySet()")
+    return CodeBlock
+        .builder()
+        .apply {
+            add("setOf(")
+            names.forEachIndexed { index, name ->
+                if (index > 0) add(", ")
+                add("%S", name)
+            }
+            add(")")
+        }.build()
+}
+
+private fun buildNestedListInitializer(paths: List<List<String>>): CodeBlock {
+    val builder = CodeBlock.builder().add("listOf(")
+    paths.forEachIndexed { index, path ->
+        if (index > 0) builder.add(", ")
+        builder.add("listOf(")
+        path.forEachIndexed { pathIndex, segment ->
+            if (pathIndex > 0) builder.add(", ")
+            builder.add("%S", segment)
+        }
+        builder.add(")")
+    }
+    builder.add(")")
+    return builder.build()
+}
+
+private fun findTopLevelComma(str: String): Int {
+    var depth = 0
+    for (i in str.indices) {
+        when (str[i]) {
+            '<' -> depth++
+            '>' -> {
+                depth--
+                // Malformed input: unmatched closing bracket
+                if (depth < 0) return -1
+            }
+            ',' -> if (depth == 0) return i
+        }
+    }
+    // No comma found at depth 0, or unclosed brackets
+    return -1
+}
+
+/**
+ * Recursively finds all paths to AssetWrapper properties within an ObjectType.
+ * Returns paths with length >= 2 (single-level paths are handled by assetWrapperProperties).
+ *
+ * Uses object instance tracking to prevent infinite recursion on circular references.
+ */
+private fun findAssetWrapperPaths(
+    rootType: ObjectType,
+    currentPath: List<String> = emptyList(),
+    visited: MutableSet<ObjectType> = mutableSetOf(),
+): List<List<String>> {
+    // Prevent cycles by checking if we've already visited this object instance
+    if (rootType in visited) return emptyList()
+
+    val paths = mutableListOf<List<String>>()
+    visited.add(rootType)
+
+    for ((propName, prop) in rootType.properties) {
+        val node = prop.node
+        val fullPath = currentPath + propName
+
+        when {
+            // Direct AssetWrapper property
+            isAssetWrapperRef(node) -> {
+                if (fullPath.size >= 2) paths.add(fullPath)
+            }
+            // Array of AssetWrappers
+            node is ArrayType && isAssetWrapperRef(node.elementType) -> {
+                if (fullPath.size >= 2) paths.add(fullPath)
+            }
+            // Nested ObjectType — recurse
+            node is ObjectType -> {
+                paths.addAll(findAssetWrapperPaths(node, fullPath, visited))
+            }
+        }
+    }
+
+    return paths
 }
 
 /**
