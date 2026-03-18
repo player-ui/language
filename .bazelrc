@@ -14,6 +14,11 @@ common --remote_timeout=3600
 common --build_metadata=REPO_URL=https://github.com/player-ui/language.git
 common --remote_cache_compression --remote_cache_async
 
+# Java config
+common --java_language_version=21
+common --tool_java_language_version=21
+common --tool_java_runtime_version=21
+
 # Python config
 common --incompatible_default_to_explicit_init_py
 

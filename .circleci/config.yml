@@ -21,22 +21,6 @@ executors:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
 
 commands:
-  install_android_sdk:
-    description: Install Android SDK for AAR builds
-    steps:
-      - run:
-          name: Install Android SDK
-          command: |
-            export ANDROID_SDK_ROOT=$HOME/android-sdk
-            mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-            cd /tmp
-            wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-            unzip -q cmdline-tools.zip
-            mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-            yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-            $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
-            echo "export ANDROID_HOME=$ANDROID_SDK_ROOT" >> $BASH_ENV
-
   setup_auth:
       description: Configure authentication for deployments
       steps:
@@ -101,7 +85,6 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/lang
-      - install_android_sdk
       # Build npm packages and Kotlin targets (JVM + Android AAR)
       - run: |
           bazel build -- \
@@ -119,8 +102,6 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/lang
-      - install_android_sdk
-
       - run: |
           bazel coverage --config=ci -- $(bazel query 'kind(".*_test", //...)' --output label 2>/dev/null | tr '\n' ' ')
 

@@ -68,14 +68,16 @@ use_repo(pip, "pypi")
 
 ####### Kotlin #########
 bazel_dep(name = "rules_kotlin", version = "2.2.1")
-bazel_dep(name = "rules_android", version = "0.7.1")
+bazel_dep(name = "rules_android", version = "0.6.5")
+bazel_dep(name = "protobuf", version = "29.3")
 
-android_sdk_repository_extension = use_extension(
-    "@rules_android//rules/android_sdk_repository:rule.bzl",
-    "android_sdk_repository_extension",
+single_version_override(
+    module_name = "protobuf",
+    version = "29.3",
 )
-use_repo(android_sdk_repository_extension, "androidsdk")
-register_toolchains("@androidsdk//:sdk-toolchain", "@androidsdk//:all")
+
+remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
+use_repo(remote_android_extensions, "android_gmaven_r8")
 
 bazel_dep(name = "rules_detekt", version = "0.8.1.13")
 bazel_dep(name = "rules_jvm_external", version = "6.9")
