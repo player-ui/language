@@ -14,11 +14,7 @@ class ValueStorage {
         key: String,
         value: Any?,
     ) {
-        if (value == null) {
-            entries[key] = StoredValue.Primitive(null)
-        } else {
-            entries[key] = toStoredValue(value)
-        }
+        entries[key] = toStoredValue(value)
     }
 
     /**

@@ -3,27 +3,11 @@ package com.intuit.playerui.lang.generator
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import java.io.File
 
 class GeneratorIntegrationTest :
     DescribeSpec({
 
-        fun loadFixture(name: String): String {
-            val classLoader = GeneratorIntegrationTest::class.java.classLoader
-            val resource =
-                classLoader.getResource(
-                    "com/intuit/playerui/lang/generator/fixtures/$name",
-                )
-            return if (resource != null) {
-                resource.readText()
-            } else {
-                val file =
-                    File(
-                        "language/generators/kotlin/src/test/kotlin/com/intuit/playerui/lang/generator/fixtures/$name",
-                    )
-                file.readText()
-            }
-        }
+        fun loadFixture(name: String): String = TestFixtures.loadFixture(name)
 
         describe("Generator integration") {
 

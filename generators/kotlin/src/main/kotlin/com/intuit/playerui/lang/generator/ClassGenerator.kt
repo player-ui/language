@@ -839,22 +839,11 @@ class ClassGenerator(
          */
         internal fun shouldHaveOverload(typeName: String): Boolean = typeName in PRIMITIVE_OVERLOAD_TYPES
 
-        /**
-         * Extension function to remove Kotlin backtick escaping from a name.
-         */
-        private fun String.cleanKotlinName(): String =
-            removePrefix("`").removeSuffix("`")
+        private fun cleanName(kotlinName: String): String =
+            kotlinName.removePrefix("`").removeSuffix("`")
 
-        /**
-         * Extension function to convert a property name to a "with" method name.
-         */
-        private fun String.toWithMethodName(): String =
-            "with${replaceFirstChar { it.uppercase() }}"
-
-        // Keep the old functions for backward compatibility within the class
-        private fun cleanName(kotlinName: String): String = kotlinName.cleanKotlinName()
-
-        private fun withMethodName(poetName: String): String = poetName.toWithMethodName()
+        private fun withMethodName(poetName: String): String =
+            "with${poetName.replaceFirstChar { it.uppercase() }}"
     }
 }
 

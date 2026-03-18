@@ -421,22 +421,6 @@ class TypeMapperTest :
             }
 
             describe("utility functions") {
-                it("makeNullable adds ? to non-nullable type") {
-                    TypeMapper.makeNullable("String") shouldBe "String?"
-                }
-
-                it("makeNullable preserves already nullable type") {
-                    TypeMapper.makeNullable("String?") shouldBe "String?"
-                }
-
-                it("makeNonNullable removes ? from nullable type") {
-                    TypeMapper.makeNonNullable("String?") shouldBe "String"
-                }
-
-                it("makeNonNullable preserves non-nullable type") {
-                    TypeMapper.makeNonNullable("String") shouldBe "String"
-                }
-
                 it("toKotlinIdentifier replaces invalid characters") {
                     TypeMapper.toKotlinIdentifier("my-property") shouldBe "my_property"
                     TypeMapper.toKotlinIdentifier("my.property") shouldBe "my_property"

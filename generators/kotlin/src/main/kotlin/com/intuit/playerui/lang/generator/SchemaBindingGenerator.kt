@@ -1,5 +1,6 @@
 package com.intuit.playerui.lang.generator
 
+import com.intuit.playerui.lang.generator.PoetTypes.BINDING
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -147,10 +148,8 @@ class SchemaBindingGenerator(
 
             val typeNode = schema[typeName]
             if (typeNode != null) {
-                val nestedVisited = HashSet(visited)
-                nestedVisited.add(typeName)
                 val nestedObject = TypeSpec.objectBuilder(kotlinName)
-                addNodeProperties(nestedObject, typeNode, schema, arrayPath, nestedVisited)
+                addNodeProperties(nestedObject, typeNode, schema, arrayPath, visitedWith(visited, typeName))
                 builder.addType(nestedObject.build())
                 return
             }
@@ -164,10 +163,8 @@ class SchemaBindingGenerator(
         if (field.isRecord == true) {
             val typeNode = schema[typeName]
             if (typeNode != null) {
-                val nestedVisited = HashSet(visited)
-                nestedVisited.add(typeName)
                 val nestedObject = TypeSpec.objectBuilder(kotlinName)
-                addNodeProperties(nestedObject, typeNode, schema, path, nestedVisited)
+                addNodeProperties(nestedObject, typeNode, schema, path, visitedWith(visited, typeName))
                 builder.addType(nestedObject.build())
                 return
             }
@@ -185,10 +182,8 @@ class SchemaBindingGenerator(
         // Handle complex types
         val typeNode = schema[typeName]
         if (typeNode != null) {
-            val nestedVisited = HashSet(visited)
-            nestedVisited.add(typeName)
             val nestedObject = TypeSpec.objectBuilder(kotlinName)
-            addNodeProperties(nestedObject, typeNode, schema, path, nestedVisited)
+            addNodeProperties(nestedObject, typeNode, schema, path, visitedWith(visited, typeName))
             builder.addType(nestedObject.build())
             return
         }
@@ -196,6 +191,9 @@ class SchemaBindingGenerator(
         // Fallback: unknown type
         builder.addProperty(buildBindingProperty(kotlinName, "StringType", path))
     }
+
+    private fun visitedWith(visited: MutableSet<String>, typeName: String): MutableSet<String> =
+        HashSet(visited).also { it.add(typeName) }
 
     private fun buildBindingProperty(
         name: String,
@@ -223,23 +221,14 @@ class SchemaBindingGenerator(
         val jsonElement =
             try {
                 Json.parseToJsonElement(json)
-            } catch (e: Exception) {
+            } catch (e: kotlinx.serialization.SerializationException) {
                 throw IllegalArgumentException("Invalid JSON schema: ${e.message}", e)
             }
 
-        val jsonObject =
-            jsonElement.jsonObject
-                ?: throw IllegalArgumentException(
-                    "Schema root must be a JSON object, got: ${jsonElement::class.simpleName}",
-                )
+        val jsonObject = jsonElement.jsonObject
 
         return jsonObject.mapValues { (nodeName, nodeElement) ->
-            val nodeObject =
-                nodeElement.jsonObject
-                    ?: throw IllegalArgumentException(
-                        "Schema node '$nodeName' must be a JSON object, " +
-                            "got: ${nodeElement::class.simpleName}",
-                    )
+            val nodeObject = nodeElement.jsonObject
             nodeObject.mapValues { (fieldName, fieldElement) ->
                 try {
                     parseSchemaField(fieldElement)
@@ -248,22 +237,13 @@ class SchemaBindingGenerator(
                         "Error parsing field '$nodeName.$fieldName': ${e.message}",
                         e,
                     )
-                } catch (e: Exception) {
-                    throw IllegalArgumentException(
-                        "Unexpected error parsing field '$nodeName.$fieldName': ${e.message}",
-                        e,
-                    )
                 }
             }
         }
     }
 
     private fun parseSchemaField(element: JsonElement): SchemaField {
-        val obj =
-            element.jsonObject
-                ?: throw IllegalArgumentException(
-                    "Schema field must be a JSON object, got: ${element::class.simpleName}",
-                )
+        val obj = element.jsonObject
 
         val type =
             obj["type"]?.jsonPrimitive?.content
@@ -277,7 +257,6 @@ class SchemaBindingGenerator(
 
     companion object {
         private val PRIMITIVE_TYPES = setOf("StringType", "NumberType", "BooleanType")
-        private val BINDING = ClassName("com.intuit.playerui.lang.dsl.tagged", "Binding")
 
         private const val ARRAY_CURRENT_SEGMENT = "_current_"
         private const val STRING_ARRAY_PROPERTY = "name"

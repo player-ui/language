@@ -18,7 +18,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import java.io.File
 
 class XlrDeserializerTest :
     DescribeSpec({
@@ -220,14 +219,4 @@ class XlrDeserializerTest :
         }
     })
 
-private fun loadFixture(name: String): String {
-    val classLoader = XlrDeserializerTest::class.java.classLoader
-    val resource = classLoader.getResource("com/intuit/playerui/lang/generator/fixtures/$name")
-    return if (resource != null) {
-        resource.readText()
-    } else {
-        val file =
-            File("language/generators/kotlin/src/test/kotlin/com/intuit/playerui/lang/generator/fixtures/$name")
-        file.readText()
-    }
-}
+private fun loadFixture(name: String): String = TestFixtures.loadFixture(name)

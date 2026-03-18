@@ -38,9 +38,12 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
 
+    val outputDir = parsedArgs.outputDir
+    val packageName = parsedArgs.packageName
+
     // Schema generation mode
     if (parsedArgs.schemaFile != null) {
-        generateSchemaBindings(parsedArgs)
+        generateSchemaBindings(parsedArgs.schemaFile, packageName, outputDir, parsedArgs.schemaName)
         return
     }
 
@@ -50,33 +53,22 @@ fun main(args: Array<String>) {
         return
     }
 
-    generateAssetBuilders(parsedArgs)
+    generateAssetBuilders(packageName, outputDir, parsedArgs.inputPaths)
 }
 
-private fun generateSchemaBindings(parsedArgs: ParsedArgs) {
-    val schemaFile =
-        parsedArgs.schemaFile ?: run {
-            System.err.println("Error: Schema file is required")
-            exitProcess(1)
-        }
-    val packageName =
-        parsedArgs.packageName ?: run {
-            System.err.println("Error: Package name is required")
-            exitProcess(1)
-        }
-    val outputDir =
-        parsedArgs.outputDir ?: run {
-            System.err.println("Error: Output directory is required")
-            exitProcess(1)
-        }
-
+private fun generateSchemaBindings(
+    schemaFile: File,
+    packageName: String,
+    outputDir: File,
+    schemaName: String?,
+) {
     if (!schemaFile.isFile) {
         System.err.println("Error: Schema file not found: ${schemaFile.absolutePath}")
         exitProcess(1)
     }
 
     val objectName =
-        parsedArgs.schemaName
+        schemaName
             ?: schemaFile.nameWithoutExtension.replaceFirstChar { it.uppercase() } + "Schema"
 
     println("Generating schema bindings...")
@@ -104,23 +96,14 @@ private fun generateSchemaBindings(parsedArgs: ParsedArgs) {
     }
 }
 
-private fun generateAssetBuilders(parsedArgs: ParsedArgs) {
-    val config =
-        GeneratorConfig(
-            packageName =
-                parsedArgs.packageName ?: run {
-                    System.err.println("Error: Package name is required")
-                    exitProcess(1)
-                },
-            outputDir =
-                parsedArgs.outputDir ?: run {
-                    System.err.println("Error: Output directory is required")
-                    exitProcess(1)
-                },
-        )
-
+private fun generateAssetBuilders(
+    packageName: String,
+    outputDir: File,
+    inputPaths: List<File>,
+) {
+    val config = GeneratorConfig(packageName = packageName, outputDir = outputDir)
     val generator = Generator(config)
-    val inputFiles = collectInputFiles(parsedArgs.inputPaths)
+    val inputFiles = collectInputFiles(inputPaths)
 
     if (inputFiles.isEmpty()) {
         System.err.println("Error: No XLR JSON files found in the specified input paths.")
@@ -186,7 +169,7 @@ private data class ParsedArgs(
 )
 
 private fun parseArgs(args: Array<String>): ParsedArgs {
-    var inputPaths = mutableListOf<File>()
+    val inputPaths = mutableListOf<File>()
     var outputDir: File? = null
     var packageName: String? = null
     var schemaFile: File? = null

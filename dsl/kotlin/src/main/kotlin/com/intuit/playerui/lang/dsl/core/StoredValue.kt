@@ -104,36 +104,23 @@ fun toStoredValue(value: Any?): StoredValue =
         }
 
         is Map<*, *> -> {
-            try {
-                // Validate all keys are strings before casting
-                if (value.keys.all { it is String }) {
-                    // Safe: validated all keys are strings
-                    @Suppress("UNCHECKED_CAST")
-                    val map = value as Map<String, Any?>
-                    if (map.values.any { containsBuilder(it) }) {
-                        StoredValue.ObjectValue(map.mapValues { (_, v) -> toStoredValue(v) })
-                    } else {
-                        StoredValue.Primitive(value)
-                    }
+            if (value.keys.all { it is String }) {
+                @Suppress("UNCHECKED_CAST")
+                val map = value as Map<String, Any?>
+                if (map.values.any { containsBuilder(it) }) {
+                    StoredValue.ObjectValue(map.mapValues { (_, v) -> toStoredValue(v) })
                 } else {
-                    // Fallback: treat as primitive if keys aren't all strings
                     StoredValue.Primitive(value)
                 }
-            } catch (e: Exception) {
-                // If any error occurs during map processing, treat as primitive
+            } else {
                 StoredValue.Primitive(value)
             }
         }
 
         is List<*> -> {
-            try {
-                if (value.any { containsBuilder(it) }) {
-                    StoredValue.ArrayValue(value.map { toStoredValue(it) })
-                } else {
-                    StoredValue.Primitive(value)
-                }
-            } catch (e: Exception) {
-                // If any error occurs during list processing, treat as primitive
+            if (value.any { containsBuilder(it) }) {
+                StoredValue.ArrayValue(value.map { toStoredValue(it) })
+            } else {
                 StoredValue.Primitive(value)
             }
         }

@@ -48,7 +48,6 @@ data class KotlinTypeInfo(
  */
 data class TypeMapperContext(
     val genericTokens: Map<String, ParamTypeNode> = emptyMap(),
-    val parentPropertyPath: String = "",
 )
 
 /**
@@ -365,16 +364,6 @@ object TypeMapper {
             description = node.description,
         )
     }
-
-    /**
-     * Get the nullable version of a type name.
-     */
-    fun makeNullable(typeName: String): String = if (typeName.endsWith("?")) typeName else "$typeName?"
-
-    /**
-     * Get the non-nullable version of a type name.
-     */
-    fun makeNonNullable(typeName: String): String = typeName.removeSuffix("?")
 
     /**
      * Kotlin hard keywords that must be escaped with backticks when used as identifiers.

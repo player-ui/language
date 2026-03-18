@@ -13,9 +13,13 @@ data class GeneratorConfig(
     val outputDir: File,
 ) {
     init {
-        require(packageName.matches(Regex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"))) {
+        require(packageName.matches(PACKAGE_NAME_REGEX)) {
             "Invalid package name: $packageName. Package names must start with a lowercase letter and contain only lowercase letters, digits, underscores, and dots."
         }
+    }
+
+    companion object {
+        private val PACKAGE_NAME_REGEX = Regex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$")
     }
 }
 

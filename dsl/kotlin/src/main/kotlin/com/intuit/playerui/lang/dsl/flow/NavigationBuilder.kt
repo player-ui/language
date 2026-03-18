@@ -86,10 +86,8 @@ class NavigationFlowBuilder {
 }
 
 @FluentDslMarker
-class ViewStateBuilder(
-    private val ref: String,
-) {
-    private val transitions = mutableMapOf<String, String>()
+abstract class TransitionableStateBuilder {
+    protected val transitions = mutableMapOf<String, String>()
 
     fun on(
         event: String,
@@ -98,41 +96,37 @@ class ViewStateBuilder(
         transitions[event] = target
     }
 
+    protected fun addTransitions(result: MutableMap<String, Any?>) {
+        if (transitions.isNotEmpty()) {
+            result["transitions"] = transitions.toMap()
+        }
+    }
+}
+
+class ViewStateBuilder(
+    private val ref: String,
+) : TransitionableStateBuilder() {
     fun build(): Map<String, Any?> {
         val result =
             mutableMapOf<String, Any?>(
                 "state_type" to "VIEW",
                 "ref" to ref,
             )
-        if (transitions.isNotEmpty()) {
-            result["transitions"] = transitions.toMap()
-        }
+        addTransitions(result)
         return result
     }
 }
 
-@FluentDslMarker
 class ActionStateBuilder(
     private val exp: Expression<*>,
-) {
-    private val transitions = mutableMapOf<String, String>()
-
-    fun on(
-        event: String,
-        target: String,
-    ) {
-        transitions[event] = target
-    }
-
+) : TransitionableStateBuilder() {
     fun build(): Map<String, Any?> {
         val result =
             mutableMapOf<String, Any?>(
                 "state_type" to "ACTION",
                 "exp" to exp.toString(),
             )
-        if (transitions.isNotEmpty()) {
-            result["transitions"] = transitions.toMap()
-        }
+        addTransitions(result)
         return result
     }
 }
