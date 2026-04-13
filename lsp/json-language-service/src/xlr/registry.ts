@@ -2,6 +2,9 @@ import type { Filters, TypeMetadata } from "@xlr-lib/xlr-sdk";
 import { BasicXLRRegistry } from "@xlr-lib/xlr-sdk";
 import type { NamedType, NodeType } from "@xlr-lib/xlr";
 
+/** Capabilities that can only exist once */
+const SINGLE_INSTANCE_CAPABILITIES = ["DataTypes", "Formatters", "Validators"];
+
 /**
  * Player specific implementation of a XLRs Registry
  */
@@ -47,7 +50,10 @@ export class PlayerXLRRegistry extends BasicXLRRegistry {
       registeredName = type.extends.genericArguments[0].const;
     }
 
-    if (this.registrationMap.has(registeredName)) {
+    if (
+      this.registrationMap.has(registeredName) &&
+      !SINGLE_INSTANCE_CAPABILITIES.includes(capability)
+    ) {
       const current = this.registrationMap.get(registeredName) as
         | string
         | string[];
