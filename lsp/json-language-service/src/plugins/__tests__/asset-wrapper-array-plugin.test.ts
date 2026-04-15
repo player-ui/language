@@ -79,7 +79,7 @@ describe("asset-wrapper-array-plugin", () => {
           "severity": 1,
         },
         {
-          "message": "Expected: AssetWrapper & object literal | StaticSwitch & object literal | DynamicSwitch & object literal",
+          "message": "Expected: AssetWrapper & object literal | StaticSwitch<T> & object literal | DynamicSwitch<T> & object literal",
           "range": {
             "end": {
               "character": 7,

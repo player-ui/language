@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach } from "vitest";
-import { CommonTypes, Types } from "@player-tools/static-xlrs";
+import { CommonTypes, Types } from "@player-lang/static-xlrs";
 import { PlayerLanguageService } from "../..";
 import { toTextDocument } from "../../utils";
 
