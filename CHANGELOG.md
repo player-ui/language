@@ -1,3 +1,23 @@
+# 0.0.2-next.1 (Tue Apr 14 2026)
+
+### Release Notes
+
+#### Pull in Schema Validation Changes ([#9](https://github.com/player-ui/language/pull/9))
+
+Bring in upstream functionality for supporting Schema Validation from [this](https://github.com/player-ui/tools/pull/242) PR.
+
+---
+
+#### 🚀 Enhancement
+
+- Pull in Schema Validation Changes [#9](https://github.com/player-ui/language/pull/9) ([@KetanReddy](https://github.com/KetanReddy))
+
+#### Authors: 1
+
+- Ketan Reddy ([@KetanReddy](https://github.com/KetanReddy))
+
+---
+
 # 0.0.2-next.0 (Fri Feb 20 2026)
 
 ### Release Notes
