@@ -9,6 +9,7 @@ import { DuplicateIDPlugin } from "./plugins/duplicate-id-plugin";
 import { MissingAssetWrapperPlugin } from "./plugins/missing-asset-wrapper-plugin";
 import { NavStatePlugin } from "./plugins/nav-state-plugin";
 import { ViewNodePlugin } from "./plugins/view-node-plugin";
+import { SchemaValidationPlugin } from "./plugins/schema-validation-plugin";
 import {
   applyAssetWrapperOrSwitch,
   applyCommonProps,
@@ -20,6 +21,7 @@ export const PLUGINS: Array<PlayerLanguageServicePlugin> = [
   new DuplicateIDPlugin(),
   new ViewNodePlugin(),
   new SchemaInfoPlugin(),
+  new SchemaValidationPlugin(),
   new AssetWrapperArrayPlugin(),
   new NavStatePlugin(),
   new MissingAssetWrapperPlugin(),

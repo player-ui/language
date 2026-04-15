@@ -10,7 +10,7 @@ export default defineConfig({
       "helpers",
       "bazel-bin",
       "bazel-out",
-      "bazel-tools",
+      "bazel-language",
       "bazel-testlogs",
     ],
     reporters: [
