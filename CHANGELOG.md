@@ -1,3 +1,23 @@
+# 0.0.2-next.2 (Wed Apr 22 2026)
+
+### Release Notes
+
+#### Setup 1.0 Release ([#10](https://github.com/player-ui/language/pull/10))
+
+Update readme
+
+---
+
+#### 💥 Breaking Change
+
+- Setup 1.0 Release [#10](https://github.com/player-ui/language/pull/10) ([@KetanReddy](https://github.com/KetanReddy))
+
+#### Authors: 1
+
+- Ketan Reddy ([@KetanReddy](https://github.com/KetanReddy))
+
+---
+
 # 0.0.2-next.1 (Tue Apr 14 2026)
 
 ### Release Notes
