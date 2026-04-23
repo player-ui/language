@@ -1,0 +1,245 @@
+package com.intuit.playerui.lang.dsl.tagged
+
+/*
+ * Standard library of expressions for the Player-UI DSL.
+ * Provides common logical, comparison, and arithmetic operations.
+ * Matches the TypeScript fluent library's std.ts implementation.
+ */
+
+/**
+ * Logical AND operation - returns true if all arguments are truthy.
+ */
+fun and(vararg args: Any): Expression<Boolean> {
+    val expressions =
+        args.map { arg ->
+            val expr = toExpressionString(arg)
+            // Wrap OR expressions in parentheses to maintain proper precedence
+            if (expr.contains(" || ") && !expr.startsWith("(")) {
+                "($expr)"
+            } else {
+                expr
+            }
+        }
+    return expression(expressions.joinToString(" && "))
+}
+
+/**
+ * Logical OR operation - returns true if any argument is truthy.
+ */
+fun or(vararg args: Any): Expression<Boolean> {
+    val expressions = args.map { toExpressionString(it) }
+    return expression(expressions.joinToString(" || "))
+}
+
+/**
+ * Logical NOT operation - returns true if argument is falsy.
+ */
+fun not(value: Any): Expression<Boolean> {
+    val expr = toExpressionString(value)
+    // Wrap complex expressions in parentheses
+    val wrappedExpr =
+        if (expr.contains(" ") && !expr.startsWith("(")) {
+            "($expr)"
+        } else {
+            expr
+        }
+    return expression("!$wrappedExpr")
+}
+
+/**
+ * Logical NOR operation - returns true if all arguments are falsy.
+ */
+fun nor(vararg args: Any): Expression<Boolean> = not(or(*args))
+
+/**
+ * Logical NAND operation - returns false if all arguments are truthy.
+ */
+fun nand(vararg args: Any): Expression<Boolean> = not(and(*args))
+
+/**
+ * Logical XOR operation - returns true if exactly one argument is truthy.
+ */
+fun xor(left: Any, right: Any): Expression<Boolean> {
+    val leftExpr = toExpressionString(left)
+    val rightExpr = toExpressionString(right)
+    return expression("($leftExpr && !$rightExpr) || (!$leftExpr && $rightExpr)")
+}
+
+/**
+ * Helper function to create binary comparison expressions.
+ * Reduces code duplication across all comparison operators.
+ */
+private fun createComparisonExpression(
+    left: Any,
+    right: Any?,
+    operator: String,
+): Expression<Boolean> {
+    val leftExpr = toExpressionString(left)
+    val rightExpr = toValueString(right)
+    return expression("$leftExpr $operator $rightExpr")
+}
+
+/**
+ * Equality comparison (loose equality ==).
+ */
+fun <T> equal(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "==")
+
+/**
+ * Strict equality comparison (===).
+ */
+fun <T> strictEqual(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "===")
+
+/**
+ * Inequality comparison (!=).
+ */
+fun <T> notEqual(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "!=")
+
+/**
+ * Strict inequality comparison (!==).
+ */
+fun <T> strictNotEqual(
+    left: Any,
+    right: T,
+): Expression<Boolean> = createComparisonExpression(left, right, "!==")
+
+/**
+ * Greater than comparison (>).
+ */
+fun greaterThan(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, ">")
+
+/**
+ * Greater than or equal comparison (>=).
+ */
+fun greaterThanOrEqual(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, ">=")
+
+/**
+ * Less than comparison (<).
+ */
+fun lessThan(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, "<")
+
+/**
+ * Less than or equal comparison (<=).
+ */
+fun lessThanOrEqual(
+    left: Any,
+    right: Any,
+): Expression<Boolean> = createComparisonExpression(left, right, "<=")
+
+/**
+ * Addition operation (+).
+ */
+fun add(vararg args: Any): Expression<Number> {
+    val expressions = args.map { toExpressionString(it) }
+    return expression(expressions.joinToString(" + "))
+}
+
+/**
+ * Subtraction operation (-).
+ */
+fun subtract(left: Any, right: Any): Expression<Number> {
+    val leftExpr = toExpressionString(left)
+    val rightExpr = toExpressionString(right)
+    return expression("$leftExpr - $rightExpr")
+}
+
+/**
+ * Multiplication operation (*).
+ */
+fun multiply(vararg args: Any): Expression<Number> {
+    val expressions = args.map { toExpressionString(it) }
+    return expression(expressions.joinToString(" * "))
+}
+
+/**
+ * Division operation (/).
+ */
+fun divide(left: Any, right: Any): Expression<Number> {
+    val leftExpr = toExpressionString(left)
+    val rightExpr = toExpressionString(right)
+    return expression("$leftExpr / $rightExpr")
+}
+
+/**
+ * Modulo operation (%).
+ */
+fun modulo(left: Any, right: Any): Expression<Number> {
+    val leftExpr = toExpressionString(left)
+    val rightExpr = toExpressionString(right)
+    return expression("$leftExpr % $rightExpr")
+}
+
+/**
+ * Conditional (ternary) operation - if-then-else logic.
+ */
+fun <T> conditional(
+    condition: Any,
+    ifTrue: T,
+    ifFalse: T
+): Expression<T> {
+    val conditionExpr = toExpressionString(condition)
+    val trueExpr = toValueString(ifTrue)
+    val falseExpr = toValueString(ifFalse)
+    return expression("$conditionExpr ? $trueExpr : $falseExpr")
+}
+
+/**
+ * Function call expression.
+ */
+fun <T> call(functionName: String, vararg args: Any): Expression<T> {
+    val argExpressions = args.map { toValueString(it) }
+    return expression("$functionName(${argExpressions.joinToString(", ")})")
+}
+
+/**
+ * Creates a literal value expression.
+ */
+fun <T> literal(value: T): Expression<T> = expression(toValueString(value))
+
+/**
+ * Converts a value to its expression string representation.
+ * For TaggedValues, extracts the inner expression/binding path.
+ * For primitives, returns the string representation.
+ */
+private fun toExpressionString(value: Any): String =
+    when (value) {
+        is TaggedValue<*> -> value.toValue()
+        is Boolean -> value.toString()
+        is Number -> value.toString()
+        is String -> value
+        else -> value.toString()
+    }
+
+/**
+ * Converts a value to its JSON representation for use in expressions.
+ * For TaggedValues, extracts the inner expression/binding path.
+ * For primitives, returns JSON-encoded strings.
+ */
+private fun toValueString(value: Any?): String =
+    when (value) {
+        null -> "null"
+        is TaggedValue<*> -> value.toValue()
+        is Boolean -> value.toString()
+        is Number -> value.toString()
+        is String -> "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        is List<*> -> "[${value.joinToString(", ") { toValueString(it) }}]"
+        is Map<*, *> -> "{${value.entries.joinToString(", ") { "\"${it.key}\": ${toValueString(it.value)}" }}}"
+        else -> "\"$value\""
+    }

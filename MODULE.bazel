@@ -66,8 +66,59 @@ pip.parse(
 
 use_repo(pip, "pypi")
 
+####### Kotlin #########
+bazel_dep(name = "rules_kotlin", version = "2.2.1")
+bazel_dep(name = "rules_android", version = "0.6.5")
+bazel_dep(name = "protobuf", version = "29.3")
+
+single_version_override(
+    module_name = "protobuf",
+    version = "29.3",
+)
+
+remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
+use_repo(remote_android_extensions, "android_gmaven_r8")
+
+bazel_dep(name = "rules_detekt", version = "0.8.1.13")
+bazel_dep(name = "rules_jvm_external", version = "6.9")
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    known_contributing_modules = ["bazel_worker_java", "player-lang"],
+    artifacts = [
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.0",
+        "org.jetbrains.kotlin:kotlin-test:2.3.0",
+        "org.jetbrains.kotlin:kotlin-test-junit5:2.3.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0",
+        "io.kotest:kotest-runner-junit5:6.0.7",
+        "io.kotest:kotest-assertions-core:6.0.7",
+        "io.kotest:kotest-assertions-json:6.0.7",
+        "org.junit.jupiter:junit-jupiter-api:5.7.2",
+        "org.junit.jupiter:junit-jupiter-engine:5.7.2",
+        "org.junit.jupiter:junit-jupiter-params:5.7.2",
+        "org.junit.platform:junit-platform-commons:1.7.2",
+        "org.junit.platform:junit-platform-console:1.7.2",
+        "org.junit.platform:junit-platform-engine:1.7.2",
+        "org.junit.platform:junit-platform-launcher:1.7.2",
+        "org.junit.platform:junit-platform-suite-api:1.7.2",
+        "org.apiguardian:apiguardian-api:1.0.0",
+        "org.opentest4j:opentest4j:1.1.1",
+        "com.intuit.playerui.xlr:xlr-types:0.2.0--canary.4.100-SNAPSHOT",
+        "com.squareup:kotlinpoet-jvm:2.1.0",
+    ],
+    repositories = [
+        "https://repo1.maven.org/maven2",
+        "https://central.sonatype.com/repository/maven-snapshots",
+    ],
+)
+use_repo(maven, "maven")
+########################
+
 build_constants = use_repo_rule("@rules_player//distribution:defs.bzl", "build_constants")
 build_constants(
     name = "build_constants",
+    constants = {
+        "GROUP": "com.intuit.playerui.lang",
+    },
     version_file = "//:VERSION",
 )

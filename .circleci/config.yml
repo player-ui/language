@@ -14,7 +14,7 @@ orbs:
 executors:
   base:
     docker:
-      - image: docker.io/playerui/bazel-docker-slim:18
+      - image: docker.io/playerui/bazel-docker:18
     working_directory: ~/lang
     resource_class: large
     environment:
@@ -85,8 +85,11 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/lang
-      # Python files don't have a build step so we only need to actually build the JS files
-      - run: bazel build -- $(bazel query "kind(npm_package, //...)" --output label 2>/dev/null | tr '\n' ' ')
+      # Build npm packages and Kotlin targets (JVM + Android AAR)
+      - run: |
+          bazel build -- \
+            $(bazel query "kind(npm_package, //...)" --output label 2>/dev/null | tr '\n' ' ') \
+            //dsl/kotlin:kotlin-dsl //dsl/kotlin:kotlin-dsl-android //generators/kotlin:kotlin-dsl-generator
 
       - persist_to_workspace:
           root: .
@@ -99,9 +102,8 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/lang
-
       - run: |
-          bazel coverage --config=ci -- $(bazel query "kind(js_test, //...) + kind(py_test, //...)" --output label 2>/dev/null | tr '\n' ' ')
+          bazel coverage --config=ci -- $(bazel query 'kind(".*_test", //...)' --output label 2>/dev/null | tr '\n' ' ')
 
       - run:
           when: always

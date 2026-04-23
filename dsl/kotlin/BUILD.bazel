@@ -1,0 +1,82 @@
+load("@rules_player//kotlin:defs.bzl", "kt_android", "kt_jvm")
+load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:lint.bzl", "ktlint_config")
+load("@rules_detekt//detekt:defs.bzl", "detekt_test")
+load("@build_constants//:constants.bzl", "GROUP", "VERSION")
+
+package(default_visibility = ["//visibility:public"])
+
+ktlint_config(
+    name = "lint_config",
+    editorconfig = ".editorconfig",
+)
+
+kt_compiler_plugin(
+    name = "serialization_plugin",
+    compile_phase = True,
+    id = "org.jetbrains.kotlin.serialization",
+    stubs_phase = True,
+    deps = ["@rules_kotlin//kotlin/compiler:kotlin-serialization-compiler-plugin"],
+)
+
+kt_jvm_library(
+    name = "kotlin_serialization",
+    srcs = [],
+    exported_compiler_plugins = [":serialization_plugin"],
+    exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json"],
+)
+
+detekt_test(
+    name = "detekt",
+    srcs = glob(["src/main/kotlin/**/*.kt", "src/test/kotlin/**/*.kt"]),
+    cfgs = ["//:detekt.yml"],
+    build_upon_default_config = True,
+    html_report = True,
+    tags = ["manual"],
+)
+
+kt_jvm(
+    name = "kotlin-dsl",
+    group = GROUP,
+    version = VERSION,
+    lint_config = ":lint_config",
+    main_opts = "//:kt_opts",
+    main_deps = [
+        ":kotlin_serialization",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+    test_package = "com.intuit.playerui.lang.dsl",
+    test_opts = "//:kt_opts",
+    test_deps = [
+        "@maven//:io_kotest_kotest_assertions_core",
+        "@maven//:io_kotest_kotest_assertions_json",
+        "@maven//:io_kotest_kotest_runner_junit5",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+    pom_template = ":pom.tpl",
+)
+
+kt_android(
+    name = "kotlin-dsl-android",
+    group = GROUP,
+    version = VERSION,
+    lint_config = ":lint_config",
+    main_opts = "//:kt_opts",
+    plugins = [":serialization_plugin"],
+    main_deps = [
+        "@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+    unit_test_package = "com.intuit.playerui.lang.dsl",
+    unit_test_opts = "//:kt_opts",
+    unit_test_deps = [
+        "@maven//:io_kotest_kotest_assertions_core",
+        "@maven//:io_kotest_kotest_assertions_json",
+        "@maven//:io_kotest_kotest_runner_junit5",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+    pom_template = ":pom.tpl",
+)
