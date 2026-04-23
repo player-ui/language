@@ -1,3 +1,25 @@
+# 1.0.1 (Wed Apr 22 2026)
+
+### Release Notes
+
+#### Fix breaking changes from XLR major ([#12](https://github.com/player-ui/language/pull/12))
+
+Address breaking changes from XLR's 1.0.0 release
+
+---
+
+#### 🐛 Bug Fix
+
+- Release main [#13](https://github.com/player-ui/language/pull/13) ([@intuit-svc](https://github.com/intuit-svc))
+- Fix breaking changes from XLR major [#12](https://github.com/player-ui/language/pull/12) ([@KetanReddy](https://github.com/KetanReddy))
+
+#### Authors: 2
+
+- [@intuit-svc](https://github.com/intuit-svc)
+- Ketan Reddy ([@KetanReddy](https://github.com/KetanReddy))
+
+---
+
 # 1.0.1-next.0 (Wed Apr 22 2026)
 
 ### Release Notes
