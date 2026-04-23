@@ -1,6 +1,6 @@
 import { test, expect, describe, beforeEach } from "vitest";
 import { CommonExpressions } from "@player-lang/static-xlrs";
-import { symbolDisplayToString } from "@xlr-lib/xlr-utils";
+import { symbolDisplayToString } from "../utils";
 import { ExpressionLanguageService } from "../service";
 
 describe("language-service", () => {
