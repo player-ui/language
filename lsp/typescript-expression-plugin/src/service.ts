@@ -5,7 +5,7 @@ import type {
   Logger,
 } from "typescript-template-language-service-decorator";
 import type { FunctionType, TSManifest, NodeType } from "@xlr-lib/xlr";
-import { createTSDocString } from "@xlr-lib/xlr-utils";
+import { createTSDocString } from "./utils";
 import { XLRSDK } from "@xlr-lib/xlr-sdk";
 import type { ExpressionNode } from "@player-ui/player";
 import { parseExpression } from "@player-ui/player";
