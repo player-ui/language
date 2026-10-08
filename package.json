@@ -9,9 +9,9 @@
   },
   "engines": {
     "node": "^22.21.1",
-    "pnpm": "^10.13.1"
+    "pnpm": "^10.16.0"
   },
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@10.34.6",
   "dependencies": {
     "@player-ui/player": "*",
     "@player-ui/types": "*",
@@ -66,7 +66,7 @@
   },
   "volta": {
     "node": "22.21.1",
-    "pnpm": "10.13.1"
+    "pnpm": "10.34.6"
   },
   "pnpm": {
     "onlyBuiltDependencies": []
